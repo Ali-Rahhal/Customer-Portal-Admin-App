@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 const tokenAuth = async (Bearertoken: string) => {
   try {
     const payload: any = jwt.verify(
@@ -7,13 +7,13 @@ const tokenAuth = async (Bearertoken: string) => {
       process.env.JWT_SECRET as string,
     );
 
-    const user = await prisma.web_accounts.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
-        id: payload.userId,
+        user_code: payload.userId,
       },
     });
     if (!user) throw new Error("User not found");
-    return user.id;
+    return user.user_code;
   } catch (e) {
     return null;
   }

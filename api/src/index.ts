@@ -5,6 +5,10 @@ import { cors } from "hono/cors";
 import { getCookie } from "hono/cookie";
 import { compress } from "hono/compress";
 
+import authPrivateRoutes from "./routes/private/auth.routes";
+import authPublicRoutes from "./routes/public/auth.routes";
+import clientPrivateRoutes from "./routes/private/client.routes";
+
 //@ts-expect-error weird toJSON error
 BigInt.prototype.toJSON = function () {
   return this.toString();
@@ -39,9 +43,10 @@ async function authMiddleware(c: any, next: any) {
 app.use("*", compress());
 app.use(`${PRIVATE_API}/*`, authMiddleware);
 
-// app.route(`${PUBLIC_API}`, authPublicRoutes);
+app.route(`${PUBLIC_API}`, authPublicRoutes);
 
-// app.route(`${PRIVATE_API}`, authPrivateRoutes);
+app.route(`${PRIVATE_API}`, authPrivateRoutes);
+app.route(`${PRIVATE_API}/client`, clientPrivateRoutes);
 
 const port = Number(process.env.PORT) || 5011;
 

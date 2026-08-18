@@ -1,0 +1,21 @@
+{
+  "login": {
+    "administrator_app": "Application Administrateur",
+    "title": "Connexion",
+    "subtitle": "Connectez-vous pour accéder au portail administrateur.",
+    "usercode": "Code utilisateur",
+    "usercode_placeholder": "Entrez votre code utilisateur",
+    "password": "Mot de passe",
+    "password_placeholder": "Entrez votre mot de passe",
+    "login_button": "Se connecter",
+    "usercode_required": "Code utilisateur requis",
+    "usercode_required_description": "Veuillez saisir votre code utilisateur.",
+    "password_required": "Mot de passe requis",
+    "password_required_description": "Veuillez saisir votre mot de passe.",
+    "success": "Connexion réussie",
+    "success_description": "Bon retour.",
+    "failed": "Échec de la connexion",
+    "failed_description": "Impossible de se connecter. Veuillez réessayer.",
+    "administrator_portal": "Portail Administrateur"
+  }
+}

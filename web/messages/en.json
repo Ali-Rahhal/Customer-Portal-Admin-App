@@ -1,0 +1,21 @@
+{
+  "login": {
+    "administrator_app": "Administrator App",
+    "title": "Login",
+    "subtitle": "Sign in to access the administrator portal.",
+    "usercode": "User Code",
+    "usercode_placeholder": "Enter your user code",
+    "password": "Password",
+    "password_placeholder": "Enter your password",
+    "login_button": "Login",
+    "usercode_required": "User Code Required",
+    "usercode_required_description": "Please enter your user code.",
+    "password_required": "Password Required",
+    "password_required_description": "Please enter your password.",
+    "success": "Login Successful",
+    "success_description": "Welcome back.",
+    "failed": "Login Failed",
+    "failed_description": "Unable to login. Please try again.",
+    "administrator_portal": "Administrator Portal"
+  }
+}
