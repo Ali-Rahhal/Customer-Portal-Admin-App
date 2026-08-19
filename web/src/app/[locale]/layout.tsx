@@ -22,7 +22,7 @@ const bodyFont = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Loading...",
+  title: "Customer Admin Portal",
   description: "",
 };
 

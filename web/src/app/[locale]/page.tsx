@@ -4,24 +4,24 @@ import { Card } from "@heroui/react";
 import { Package, ShoppingCart, Users, ChevronRight } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 import Layout from "@/components/layout/Layout";
 
 export default function HomePage() {
   const router = useRouter();
+  const t = useTranslations("homepage");
 
   return (
-    <Layout title="Dashboard" subtitle="Welcome to the administrator portal">
+    <Layout title={t("dashboard")} subtitle={t("subtitle")}>
       <div className="mx-auto max-w-7xl">
         {/* Welcome */}
         <div className="mb-6">
           <h2 className="text-2xl font-semibold text-foreground">
-            Welcome back
+            {t("welcomeBack")}
           </h2>
 
-          <p className="mt-1 text-sm text-default-500">
-            Here&apos;s an overview of your application.
-          </p>
+          <p className="mt-1 text-sm text-default-500">{t("overview")}</p>
         </div>
 
         {/* Stats */}
@@ -29,7 +29,7 @@ export default function HomePage() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Products</p>
+                <p className="text-sm text-default-500">{t("products")}</p>
 
                 <p className="mt-2 text-2xl font-semibold">—</p>
               </div>
@@ -43,7 +43,7 @@ export default function HomePage() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Orders</p>
+                <p className="text-sm text-default-500">{t("orders")}</p>
 
                 <p className="mt-2 text-2xl font-semibold">—</p>
               </div>
@@ -57,7 +57,7 @@ export default function HomePage() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Clients</p>
+                <p className="text-sm text-default-500">{t("clients")}</p>
 
                 <p className="mt-2 text-2xl font-semibold">—</p>
               </div>
@@ -71,10 +71,10 @@ export default function HomePage() {
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Status</p>
+                <p className="text-sm text-default-500">{t("status")}</p>
 
                 <p className="mt-2 text-lg font-semibold text-success">
-                  Active
+                  {t("active")}
                 </p>
               </div>
 
@@ -85,7 +85,7 @@ export default function HomePage() {
 
         {/* Quick actions */}
         <div className="mt-6">
-          <h3 className="mb-3 text-base font-semibold">Quick actions</h3>
+          <h3 className="mb-3 text-base font-semibold">{t("quickActions")}</h3>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card
@@ -95,8 +95,8 @@ export default function HomePage() {
             >
               <QuickAction
                 icon={<Package size={20} />}
-                title="Manage Products"
-                description="View and manage products"
+                title={t("manageProducts")}
+                description={t("manageProductsDescription")}
                 color="primary"
               />
             </Card>
@@ -108,8 +108,8 @@ export default function HomePage() {
             >
               <QuickAction
                 icon={<ShoppingCart size={20} />}
-                title="View Orders"
-                description="Review customer orders"
+                title={t("viewOrders")}
+                description={t("viewOrdersDescription")}
                 color="success"
               />
             </Card>
@@ -117,12 +117,12 @@ export default function HomePage() {
             <Card
               isPressable
               className="p-5 text-left"
-              onPress={() => router.push("/")}
+              onPress={() => router.push("/client-requests")}
             >
               <QuickAction
                 icon={<Users size={20} />}
-                title="Manage Clients"
-                description="Manage clients"
+                title={t("manageClients")}
+                description={t("manageClientsDescription")}
                 color="warning"
               />
             </Card>

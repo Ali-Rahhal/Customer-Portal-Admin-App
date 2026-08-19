@@ -7,7 +7,7 @@ import { routing } from "./i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 const unauthRoutes = ["/login"];
-const authRoutes = ["/"];
+const authRoutes = ["/", "/client-requests"];
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;

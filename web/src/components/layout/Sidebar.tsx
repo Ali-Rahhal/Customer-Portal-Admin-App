@@ -12,31 +12,33 @@ import {
   LogOut,
 } from "lucide-react";
 
+import { useTranslations } from "next-intl";
+
 import { useCompanyAssets } from "@/hooks/useCompanyAssets";
 
 const navigation = [
   {
-    label: "Dashboard",
+    key: "dashboard",
     href: "/",
     icon: LayoutDashboard,
   },
   {
-    label: "Products",
+    key: "products",
     href: "#",
     icon: Package,
   },
   {
-    label: "Orders",
+    key: "orders",
     href: "#",
     icon: ShoppingCart,
   },
   {
-    label: "Client",
-    href: "#",
+    key: "clientRequests",
+    href: "/client-requests",
     icon: Users,
   },
   {
-    label: "Settings",
+    key: "settings",
     href: "#",
     icon: Settings,
   },
@@ -48,6 +50,8 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
+  const t = useTranslations("sidebar");
+
   const { companyHydrated, companyName, companyLogo } = useCompanyAssets();
 
   return (
@@ -57,7 +61,7 @@ export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
         {companyHydrated && companyLogo ? (
           <Image
             src={companyLogo}
-            alt={companyName || "Company"}
+            alt={companyName || t("company")}
             width={40}
             height={40}
             className="h-10 w-10 object-contain"
@@ -68,10 +72,10 @@ export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
 
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">
-            {companyHydrated ? companyName : "Loading..."}
+            {companyHydrated ? companyName : t("loading")}
           </p>
 
-          <p className="text-xs text-default-500">Administrator</p>
+          <p className="text-xs text-default-500">{t("administrator")}</p>
         </div>
       </div>
 
@@ -80,7 +84,7 @@ export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-5">
         <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-default-400">
-          Navigation
+          {t("navigation")}
         </p>
 
         <div className="space-y-1">
@@ -89,7 +93,7 @@ export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
 
             return (
               <Link
-                key={item.label}
+                key={item.key}
                 href={item.href}
                 className={`flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
                   item.href === "/"
@@ -99,7 +103,8 @@ export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
                 onClick={onNavigate}
               >
                 <Icon size={19} />
-                <span>{item.label}</span>
+
+                <span>{t(item.key)}</span>
               </Link>
             );
           })}
@@ -116,7 +121,8 @@ export default function Sidebar({ onNavigate, onLogout }: SidebarProps) {
           onPress={onLogout}
         >
           <LogOut size={19} />
-          Logout
+
+          {t("logout")}
         </Button>
       </div>
     </div>

@@ -159,6 +159,51 @@ const acceptClient = async (clientCode: string, userId: string) => {
       },
     });
 
+    // Check if web account already exists
+    const webAccount = await tx.web_accounts.findFirst({
+      where: {
+        code: clientCode,
+      },
+    });
+
+    if (webAccount) {
+      // Update existing web account
+      await tx.web_accounts.update({
+        where: {
+          id: webAccount.id,
+        },
+        data: {
+          password: "noPasswordCurently",
+          phone: pendingClient.phone_number,
+          description: pendingClient.description,
+        },
+      });
+    } else {
+      // Get the largest web account ID
+      const lastWebAccount = await tx.web_accounts.findFirst({
+        orderBy: {
+          id: "desc",
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const newWebAccountId = (lastWebAccount?.id ?? 0) + 1;
+
+      // Create new web account
+      await tx.web_accounts.create({
+        data: {
+          id: newWebAccountId,
+          code: clientCode,
+          description: pendingClient.description,
+          password: "noPasswordCurently",
+          phone: pendingClient.phone_number,
+          role: "USER",
+        },
+      });
+    }
+
     return updatedClient;
   });
 };

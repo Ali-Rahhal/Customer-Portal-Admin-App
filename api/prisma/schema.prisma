@@ -495,6 +495,7 @@ model client {
   billing_address_type         Int                            @default(0, map: "DF__client__billing___6EF57B66")
   unique_identifier            Int                            @default(autoincrement())
   moh_number                   String?                        @db.NVarChar(50)
+  email                        String?                        @db.NVarChar(100)
   client_location_availability client_location_availability[]
   client_price_list            client_price_list[]
 
@@ -713,15 +714,15 @@ model client_location_history {
 }
 
 model client_pending {
-  client_code  String    @id(map: "PK__client_p__EC5CBC360CC821A2") @db.NVarChar(50)
-  moh_number   String?   @db.NVarChar(50)
-  password     String?   @db.NVarChar(150)
-  phone_number String?   @db.NVarChar(100)
-  email        String?   @db.NVarChar(100)
-  description  String?   @db.NVarChar(100)
-  date_added   DateTime? @default(now(), map: "DF__client_pe__date___31314302")
-  last_edited  DateTime? @default(now(), map: "DF__client_pe__last___3225673B")
-  is_active    Boolean   @default(true, map: "DF__client_pe__is_ac__33198B74")
+  client_code      String    @id(map: "PK__client_p__EC5CBC360CC821A2") @db.NVarChar(50)
+  moh_number       String?   @db.NVarChar(50)
+  phone_number     String?   @db.NVarChar(100)
+  email            String?   @db.NVarChar(100)
+  description      String?   @db.NVarChar(100)
+  password_created Boolean   @default(false, map: "DF_client_pending_passwordCreated")
+  date_added       DateTime? @default(now(), map: "DF__client_pe__date___31314302")
+  last_edited      DateTime? @default(now(), map: "DF__client_pe__last___3225673B")
+  is_active        Boolean   @default(true, map: "DF__client_pe__is_ac__33198B74")
 }
 
 model client_price_list {
