@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+
 import { Form, Input, Button, Card, addToast } from "@heroui/react";
+
+import { Eye, EyeOff } from "lucide-react";
 
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 import { useAuthStore } from "@/stores/AuthStore";
 import { useCompanyAssets } from "@/hooks/useCompanyAssets";
+
 import LanguageSelect from "@/components/LanguageSelect";
 
 export default function LoginPage() {
@@ -17,12 +22,15 @@ export default function LoginPage() {
   const { login } = useAuthStore();
   const { companyHydrated, companyName, companyLogo } = useCompanyAssets();
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
 
     const userId = String(formData.get("userId") || "").trim();
+
     const password = String(formData.get("password") || "");
 
     if (!userId) {
@@ -73,20 +81,15 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-default-50 px-4 py-10 sm:px-6">
-      <LanguageSelect className="absolute right-5 top-5 z-20 w-40 sm:right-8 sm:top-7" />
+    <main className="relative flex min-h-screen items-center justify-center bg-blue-500 dark:bg-blue-700 px-4 py-8 sm:px-6">
+      {/* Language */}
+      <LanguageSelect className="absolute right-5 top-5 z-20 sm:right-8 sm:top-7" />
 
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-
-        <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-      </div>
-
-      <Card className="relative w-full max-w-md border border-default-200 bg-background p-6 shadow-lg sm:p-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center text-center">
-          <div className="relative h-36 w-64">
+      {/* Login card */}
+      <Card className="relative w-full max-w-md rounded-3xl bg-background p-6 shadow-2xl sm:p-8">
+        <div className="flex flex-col items-center">
+          {/* Logo */}
+          <div className="relative h-32 w-60 sm:h-36 sm:w-64">
             {companyHydrated && companyLogo ? (
               <Image
                 src={companyLogo}
@@ -94,70 +97,76 @@ export default function LoginPage() {
                 fill
                 priority
                 className="object-contain"
-                sizes="100vw"
+                sizes="256px"
               />
             ) : (
-              <div className="h-28 w-28 animate-pulse rounded-xl bg-default-200" />
+              <div className="h-full w-full animate-pulse rounded-xl bg-default-200" />
             )}
           </div>
 
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-            {t("administrator_app")}
-          </p>
-        </div>
-
-        {/* Heading */}
-        <div className="mt-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {/* Title */}
+          <h1 className="mt-5 text-center text-2xl font-semibold tracking-tight text-foreground">
             {t("title")}
           </h1>
-
-          <p className="mt-2 text-sm leading-5 text-default-500">
-            {t("subtitle")}
-          </p>
         </div>
 
         {/* Form */}
         <Form
-          className="mt-7 flex w-full flex-col gap-5"
+          className="mt-8 flex w-full flex-col gap-5"
           onSubmit={handleSubmit}
         >
+          {/* User code */}
           <Input
             id="input-userCode"
             name="userId"
             label={t("usercode")}
             placeholder={t("usercode_placeholder")}
             variant="bordered"
+            radius="lg"
             isRequired
             autoComplete="username"
             className="w-full"
           />
 
+          {/* Password */}
           <Input
             id="input-pass"
             name="password"
             label={t("password")}
             placeholder={t("password_placeholder")}
-            type="password"
+            type={showPassword ? "text" : "password"}
             variant="bordered"
+            radius="lg"
             isRequired
             autoComplete="current-password"
             className="w-full"
+            endContent={
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((value) => !value)}
+                className="flex items-center justify-center text-default-400 outline-none transition-colors hover:text-foreground focus:text-foreground"
+              >
+                {showPassword ? <Eye size={19} /> : <EyeOff size={19} />}
+              </button>
+            }
           />
 
+          {/* Login button */}
           <Button
             type="submit"
             color="primary"
             size="lg"
+            radius="lg"
             className="mt-2 w-full font-semibold"
           >
             {t("login_button")}
           </Button>
         </Form>
 
-        {/* Footer */}
+        {/* Copyright */}
         <p className="mt-7 text-center text-xs text-default-400">
-          {companyHydrated ? companyName : t("administrator_portal")}
+          QUAYO Mobility ©2026
         </p>
       </Card>
     </main>

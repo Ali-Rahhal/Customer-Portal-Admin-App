@@ -1,56 +1,55 @@
 import { prisma } from "../lib/prisma";
 
-const getPendingClients = async (take = 20, skip = 0, search = "") => {
+const getPendingClients = async (
+  take = 20,
+  skip = 0,
+  search = "",
+  sortBy = "last_edited",
+  sortOrder: "asc" | "desc" = "desc",
+) => {
+  // 1. Fetch pending clients and their generator_user_code
   const pendingClients = await prisma.client.findMany({
-    where: {
-      status_id: 7,
-    },
+    where: { status_id: 7 },
     select: {
       client_code: true,
+      generator_user_code: true,
     },
   });
 
-  const clientCodes = pendingClients.map((client) => client.client_code);
+  // Map generator codes for O(1) lookup
+  const userCodeMap = new Map(
+    pendingClients.map((c) => [c.client_code, c.generator_user_code]),
+  );
+
+  const clientCodes = Array.from(userCodeMap.keys());
 
   const whereCondition = {
     client_code: {
       in: clientCodes,
     },
-
     ...(search && {
       OR: [
-        {
-          client_code: {
-            contains: search,
-          },
-        },
-        {
-          description: {
-            contains: search,
-          },
-        },
+        { client_code: { contains: search } },
+        { description: { contains: search } },
       ],
     }),
   };
 
-  const [total, clients] = await Promise.all([
-    prisma.client_pending.count({
-      where: whereCondition,
-    }),
+  // Dynamic orderBy object (handles both client_code and last_edited/description)
+  const orderBy = {
+    [sortBy]: sortOrder,
+  };
 
+  const [total, clients] = await Promise.all([
+    prisma.client_pending.count({ where: whereCondition }),
     prisma.client_pending.findMany({
       where: whereCondition,
-
       select: {
         client_code: true,
         description: true,
         last_edited: true,
       },
-
-      orderBy: {
-        last_edited: "desc",
-      },
-
+      orderBy,
       skip,
       take,
     }),
@@ -61,6 +60,7 @@ const getPendingClients = async (take = 20, skip = 0, search = "") => {
       client_code: client.client_code,
       name: client.description,
       request_date: client.last_edited,
+      created_by: userCodeMap.get(client.client_code) ?? null,
     })),
     total,
   };

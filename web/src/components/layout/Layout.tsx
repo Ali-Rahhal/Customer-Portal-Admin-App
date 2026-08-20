@@ -1,54 +1,54 @@
 "use client";
 
 import { ReactNode, useState } from "react";
+
 import { Drawer, DrawerBody, DrawerContent } from "@heroui/react";
 
-import { useRouter } from "@/i18n/navigation";
-import { useAuthStore } from "@/stores/AuthStore";
-
-import Sidebar from "./Sidebar";
+import NavigationSidebar from "./NavigationSidebar";
+import SettingsSidebar from "./SettingsSidebar";
 import Navbar from "./Navbar";
 
 type LayoutProps = {
   children: ReactNode;
   title: string;
-  subtitle?: string;
 };
 
-export default function Layout({ children, title, subtitle }: LayoutProps) {
-  const router = useRouter();
-  const { logout } = useAuthStore();
+export default function Layout({ children, title }: LayoutProps) {
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
+  const handleNavigation = () => {
+    setNavigationOpen(false);
   };
 
-  const handleMobileNavigation = () => {
-    setMobileMenuOpen(false);
+  const handleSettingsClose = () => {
+    setSettingsOpen(false);
   };
 
   return (
     <div className="flex min-h-screen bg-default-50">
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r border-default-200 bg-background lg:block">
-        <Sidebar onLogout={handleLogout} />
-      </aside>
-
-      {/* Mobile Drawer */}
+      {/* Navigation Sidebar */}
       <Drawer
-        isOpen={mobileMenuOpen}
-        onOpenChange={setMobileMenuOpen}
+        isOpen={navigationOpen}
+        onOpenChange={setNavigationOpen}
         placement="left"
       >
-        <DrawerContent>
+        <DrawerContent className="w-60 max-w-60">
           <DrawerBody className="p-0">
-            <Sidebar
-              onNavigate={handleMobileNavigation}
-              onLogout={handleLogout}
-            />
+            <NavigationSidebar onNavigate={handleNavigation} />
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Settings Sidebar */}
+      <Drawer
+        isOpen={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        placement="right"
+      >
+        <DrawerContent className="w-60 max-w-60">
+          <DrawerBody className="p-0">
+            <SettingsSidebar onClose={handleSettingsClose} />
           </DrawerBody>
         </DrawerContent>
       </Drawer>
@@ -57,8 +57,8 @@ export default function Layout({ children, title, subtitle }: LayoutProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Navbar
           title={title}
-          subtitle={subtitle}
-          onMenuPress={() => setMobileMenuOpen(true)}
+          onMenuPress={() => setNavigationOpen(true)}
+          onSettingsPress={() => setSettingsOpen(true)}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>

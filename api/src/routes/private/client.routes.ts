@@ -9,12 +9,23 @@ const router = new Hono();
 
 router.get(`/get_pending_clients`, async (c) => {
   try {
-    const take = Number(c.req.query("take")) || undefined;
-    const skip = Number(c.req.query("skip")) || undefined;
-
+    const take = Number(c.req.query("take")) || 20;
+    const skip = Number(c.req.query("skip")) || 0;
     const search = c.req.query("search") ?? "";
 
-    const result = await getPendingClients(take, skip, search);
+    // Sorting params
+    const sortBy = c.req.query("sortBy") || "last_edited";
+    const sortOrder = (
+      c.req.query("sortOrder")?.toLowerCase() === "asc" ? "asc" : "desc"
+    ) as "asc" | "desc";
+
+    const result = await getPendingClients(
+      take,
+      skip,
+      search,
+      sortBy,
+      sortOrder,
+    );
 
     return c.json({
       message: "Fetched Pending Clients",

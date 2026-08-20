@@ -9,6 +9,7 @@ import { useCompanyAssets } from "@/hooks/useCompanyAssets";
 
 import NavigationProgressBar from "@/components/NavigationProgressBar";
 import { HeroUIProvider, ToastProvider } from "@heroui/react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 export default function AppProviders({
   children,
@@ -74,14 +75,21 @@ export default function AppProviders({
 
   return (
     <HeroUIProvider>
-      <NavigationProgressBar />
-      <ToastProvider
-        placement="top-right"
-        toastProps={{
-          timeout: 3000,
-        }}
-      />
-      {children}
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        disableTransitionOnChange
+      >
+        <NavigationProgressBar />
+        <ToastProvider
+          placement="top-right"
+          toastProps={{
+            timeout: 3000,
+          }}
+        />
+        {children}
+      </NextThemesProvider>
     </HeroUIProvider>
   );
 }

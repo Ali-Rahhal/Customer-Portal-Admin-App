@@ -1,8 +1,6 @@
 {
   "login": {
-    "administrator_app": "Administrator App",
-    "title": "Login",
-    "subtitle": "Sign in to access the administrator portal.",
+    "title": "Login to App",
     "usercode": "User Code",
     "usercode_placeholder": "Enter your user code",
     "password": "Password",
@@ -15,24 +13,23 @@
     "success": "Login Successful",
     "success_description": "Welcome back.",
     "failed": "Login Failed",
-    "failed_description": "Unable to login. Please try again.",
-    "administrator_portal": "Administrator Portal"
+    "failed_description": "Unable to login. Please try again."
   },
-  "sidebar": {
-    "company": "Company",
-    "loading": "Loading...",
-    "administrator": "Administrator",
-    "navigation": "Navigation",
+  "navigationSidebar": {
+    "user": "User",
     "dashboard": "Dashboard",
-    "products": "Products",
+    "mainDashboard": "Main Dashboard",
     "orders": "Orders",
-    "clientRequests": "Client Requests",
-    "settings": "Settings",
-    "logout": "Logout"
+    "confirmedOrders": "Confirmed Orders",
+    "client": "Client",
+    "clientApproval": "Client Approval",
+    "clientList": "Client List",
+    "approvalReports": "Approval Reports",
+    "clientLogins": "Client Logins",
+    "version": "Version"
   },
   "homepage": {
     "dashboard": "Dashboard",
-    "subtitle": "Welcome to the administrator portal",
     "welcomeBack": "Welcome back",
     "overview": "Here's an overview of your application.",
     "products": "Products",
@@ -48,14 +45,18 @@
     "manageClients": "Manage Clients",
     "manageClientsDescription": "Manage clients"
   },
-  "clientRequests": {
-    "title": "Client Requests",
-    "subtitle": "Review and manage client registration requests",
-    "description": "Review pending client registration requests.",
+  "clientApproval": {
+    "title": "Client Approval",
+    "pending": "Pending",
     "searchPlaceholder": "Search by name or client code...",
+    "sortBy": "Sort By",
+    "ascending": "Ascending",
+    "descending": "Descending",
     "name": "Name",
     "code": "Code",
     "requestDate": "Request Date",
+    "days": "Days",
+    "createdBy": "Created By",
     "actions": "Actions",
     "approve": "Approve",
     "reject": "Reject",

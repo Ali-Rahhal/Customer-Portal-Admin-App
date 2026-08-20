@@ -13,7 +13,7 @@ export default function HomePage() {
   const t = useTranslations("homepage");
 
   return (
-    <Layout title={t("dashboard")} subtitle={t("subtitle")}>
+    <Layout title={t("dashboard")}>
       <div className="mx-auto max-w-7xl">
         {/* Welcome */}
         <div className="mb-6">

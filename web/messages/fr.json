@@ -1,8 +1,6 @@
 {
   "login": {
-    "administrator_app": "Application Administrateur",
-    "title": "Connexion",
-    "subtitle": "Connectez-vous pour accéder au portail administrateur.",
+    "title": "Se connecter",
     "usercode": "Code utilisateur",
     "usercode_placeholder": "Entrez votre code utilisateur",
     "password": "Mot de passe",
@@ -15,24 +13,23 @@
     "success": "Connexion réussie",
     "success_description": "Bon retour.",
     "failed": "Échec de la connexion",
-    "failed_description": "Impossible de se connecter. Veuillez réessayer.",
-    "administrator_portal": "Portail Administrateur"
+    "failed_description": "Impossible de se connecter. Veuillez réessayer."
   },
-  "sidebar": {
-    "company": "Entreprise",
-    "loading": "Chargement...",
-    "administrator": "Administrateur",
-    "navigation": "Navigation",
+  "navigationSidebar": {
+    "user": "Utilisateur",
     "dashboard": "Tableau de bord",
-    "products": "Produits",
+    "mainDashboard": "Tableau de bord principal",
     "orders": "Commandes",
-    "clientRequests": "Demandes des clients",
-    "settings": "Paramètres",
-    "logout": "Déconnexion"
+    "confirmedOrders": "Commandes confirmées",
+    "client": "Client",
+    "clientApproval": "Demandes des clients",
+    "clientList": "Liste des clients",
+    "approvalReports": "Rapports d'approbation",
+    "clientLogins": "Connexions des clients",
+    "version": "Version"
   },
   "homepage": {
     "dashboard": "Tableau de bord",
-    "subtitle": "Bienvenue sur le portail d'administration",
     "welcomeBack": "Bon retour",
     "overview": "Voici un aperçu de votre application.",
     "products": "Produits",
@@ -48,14 +45,18 @@
     "manageClients": "Gérer les clients",
     "manageClientsDescription": "Gérer les clients"
   },
-  "clientRequests": {
+  "clientApproval": {
     "title": "Demandes des clients",
-    "subtitle": "Examiner et gérer les demandes d'inscription des clients",
-    "description": "Examiner les demandes d'inscription des clients en attente.",
+    "pending": "Demandes en attente",
     "searchPlaceholder": "Rechercher par nom ou code client...",
+    "sortBy": "Trier par",
+    "ascending": "Ascendant",
+    "descending": "Descendant",
     "name": "Nom",
     "code": "Code",
     "requestDate": "Date de la demande",
+    "days": "Jours",
+    "createdBy": "Créateur",
     "actions": "Actions",
     "approve": "Approuver",
     "reject": "Rejeter",

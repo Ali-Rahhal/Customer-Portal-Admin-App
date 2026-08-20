@@ -1,8 +1,16 @@
 "use client";
 
-import { Select, SelectItem } from "@heroui/react";
+import {
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from "@heroui/react";
+
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+
 import ReactCountryFlag from "react-country-flag";
 
 const languages = [
@@ -23,8 +31,12 @@ export default function LanguageSelect({ className }: { className?: string }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLocale = event.target.value;
+  const selectedLanguage = languages.find(
+    (language) => language.key === locale,
+  );
+
+  const handleChange = (key: React.Key) => {
+    const newLocale = String(key);
 
     if (!newLocale || newLocale === locale) return;
 
@@ -35,28 +47,46 @@ export default function LanguageSelect({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <Select
-        aria-label="Select language"
-        selectedKeys={[locale]}
-        onChange={handleChange}
-        className="w-full"
-        variant="bordered"
-        radius="lg"
-      >
-        {languages.map((language) => (
-          <SelectItem key={language.key} textValue={language.name}>
-            <div className="flex items-center gap-2">
+      <Dropdown placement="bottom-end">
+        <DropdownTrigger>
+          <Button
+            isIconOnly
+            variant="bordered"
+            radius="full"
+            className="h-10 w-10 min-w-10"
+            aria-label="Select language"
+          >
+            {selectedLanguage && (
               <ReactCountryFlag
-                countryCode={language.flag}
+                countryCode={selectedLanguage.flag}
                 svg
                 className="h-5 w-5"
               />
+            )}
+          </Button>
+        </DropdownTrigger>
 
-              <span>{language.name}</span>
-            </div>
-          </SelectItem>
-        ))}
-      </Select>
+        <DropdownMenu
+          aria-label="Select language"
+          selectedKeys={new Set([locale])}
+          selectionMode="single"
+          onAction={handleChange}
+        >
+          {languages.map((language) => (
+            <DropdownItem key={language.key} textValue={language.name}>
+              <div className="flex items-center gap-2">
+                <ReactCountryFlag
+                  countryCode={language.flag}
+                  svg
+                  className="h-5 w-5"
+                />
+
+                <span>{language.name}</span>
+              </div>
+            </DropdownItem>
+          ))}
+        </DropdownMenu>
+      </Dropdown>
     </div>
   );
 }

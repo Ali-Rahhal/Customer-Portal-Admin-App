@@ -91,12 +91,16 @@ const getPendingClients = async (
   take = 20,
   skip = 0,
   search = "",
+  sortBy = "last_edited",
+  sortOrder: "asc" | "desc" = "desc",
 ): Promise<AxiosResponse> => {
   return await axios.get(`${privateApi}/client/get_pending_clients`, {
     params: {
       take,
       skip,
       search,
+      sortBy,
+      sortOrder,
     },
     withCredentials: true,
   });

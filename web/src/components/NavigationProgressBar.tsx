@@ -1,13 +1,20 @@
 "use client";
 
 import { Progress } from "@heroui/react";
+
 import { usePathname } from "@/i18n/navigation";
+
 import { useEffect, useState } from "react";
 
 export default function NavigationProgressBar() {
   const pathname = usePathname();
 
   const [navigationTarget, setNavigationTarget] = useState<string | null>(null);
+
+  // Clear the progress bar when navigation completes
+  useEffect(() => {
+    setNavigationTarget(null);
+  }, [pathname]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -67,10 +74,7 @@ export default function NavigationProgressBar() {
     };
   }, []);
 
-  const isNavigating =
-    navigationTarget !== null && navigationTarget !== pathname;
-
-  if (!isNavigating) {
+  if (navigationTarget === null) {
     return null;
   }
 

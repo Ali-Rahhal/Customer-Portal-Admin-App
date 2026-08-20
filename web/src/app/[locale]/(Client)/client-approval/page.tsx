@@ -6,6 +6,8 @@ import {
   Button,
   Card,
   Input,
+  Select,
+  SelectItem,
   Spinner,
   Table,
   TableBody,
@@ -15,6 +17,7 @@ import {
   TableRow,
   addToast,
 } from "@heroui/react";
+import type { SortDescriptor } from "@react-types/shared";
 
 import { Check, Search, X } from "lucide-react";
 
@@ -32,21 +35,37 @@ interface PendingClient {
   client_code: string;
   name: string;
   request_date: string;
+  created_by: string;
 }
+
+type SortColumn = "client_code" | "description" | "last_edited";
+
+const SORT_COLUMN_MAP: Record<string, SortColumn> = {
+  client_code: "client_code",
+  name: "description",
+  request_date: "last_edited",
+};
 
 const PAGE_SIZE = 10;
 
-export default function ClientRequestsPage() {
-  const t = useTranslations("clientRequests");
+export default function ClientApprovalPage() {
+  const t = useTranslations("clientApproval");
 
   const [clients, setClients] = useState<PendingClient[]>([]);
   const [total, setTotal] = useState(0);
 
   const [page, setPage] = useState(1);
+
   const [search, setSearch] = useState("");
 
   const [loading, setLoading] = useState(true);
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+    column: "request_date",
+    direction: "descending",
+  });
 
   const fetchClients = useCallback(async () => {
     try {
@@ -54,7 +73,19 @@ export default function ClientRequestsPage() {
 
       const skip = (page - 1) * PAGE_SIZE;
 
-      const response = await getPendingClients(PAGE_SIZE, skip, search);
+      const sortBy =
+        SORT_COLUMN_MAP[String(sortDescriptor.column)] ?? "last_edited";
+
+      const sortOrder =
+        sortDescriptor.direction === "ascending" ? "asc" : "desc";
+
+      const response = await getPendingClients(
+        PAGE_SIZE,
+        skip,
+        search,
+        sortBy,
+        sortOrder,
+      );
 
       const result = response.data.result;
 
@@ -68,7 +99,7 @@ export default function ClientRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, t]);
+  }, [page, search, sortDescriptor, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +110,19 @@ export default function ClientRequestsPage() {
 
         const skip = (page - 1) * PAGE_SIZE;
 
-        const response = await getPendingClients(PAGE_SIZE, skip, search);
+        const sortBy =
+          SORT_COLUMN_MAP[String(sortDescriptor.column)] ?? "last_edited";
+
+        const sortOrder =
+          sortDescriptor.direction === "ascending" ? "asc" : "desc";
+
+        const response = await getPendingClients(
+          PAGE_SIZE,
+          skip,
+          search,
+          sortBy,
+          sortOrder,
+        );
 
         if (cancelled) return;
 
@@ -106,12 +149,17 @@ export default function ClientRequestsPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, search, t]);
+  }, [page, search, sortDescriptor, t]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleSearch = (value: string) => {
     setSearch(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (descriptor: SortDescriptor) => {
+    setSortDescriptor(descriptor);
     setPage(1);
   };
 
@@ -168,19 +216,22 @@ export default function ClientRequestsPage() {
   };
 
   return (
-    <Layout title={t("title")} subtitle={t("subtitle")}>
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-foreground">
-            {t("title")}
-          </h2>
+    <Layout title={t("title")}>
+      <div className="mx-auto w-full max-w-350">
+        {/* Top section */}
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Pending counter */}
+          <div>
+            <p className="text-sm font-medium text-default-500">
+              {t("pending")}
+            </p>
 
-          <p className="mt-1 text-sm text-default-500">{t("description")}</p>
-        </div>
+            <p className="mt-1 text-3xl font-semibold text-foreground">
+              {total}
+            </p>
+          </div>
 
-        {/* Search */}
-        <div className="mb-4">
+          {/* Search */}
           <Input
             value={search}
             onValueChange={handleSearch}
@@ -193,13 +244,35 @@ export default function ClientRequestsPage() {
         </div>
 
         {/* Desktop table */}
-        <Card className="hidden overflow-hidden sm:block">
-          <Table aria-label={t("title")} removeWrapper>
+        <Card className="hidden w-full overflow-hidden sm:block">
+          <Table
+            aria-label={t("title")}
+            isStriped={true}
+            sortDescriptor={sortDescriptor}
+            onSortChange={handleSortChange}
+          >
             <TableHeader>
-              <TableColumn>{t("name").toUpperCase()}</TableColumn>
-              <TableColumn>{t("code").toUpperCase()}</TableColumn>
-              <TableColumn>{t("requestDate").toUpperCase()}</TableColumn>
-              <TableColumn>{t("actions").toUpperCase()}</TableColumn>
+              <TableColumn key="client_code" allowsSorting>
+                {t("code").toUpperCase()}
+              </TableColumn>
+
+              <TableColumn key="name" allowsSorting>
+                {t("name").toUpperCase()}
+              </TableColumn>
+
+              <TableColumn key="created_by">
+                {t("createdBy").toUpperCase()}
+              </TableColumn>
+
+              <TableColumn key="request_date" allowsSorting>
+                {t("requestDate").toUpperCase()}
+              </TableColumn>
+
+              <TableColumn key="days">{t("days").toUpperCase()}</TableColumn>
+
+              <TableColumn key="actions">
+                {t("actions").toUpperCase()}
+              </TableColumn>
             </TableHeader>
 
             <TableBody
@@ -209,18 +282,36 @@ export default function ClientRequestsPage() {
             >
               {clients.map((client) => (
                 <TableRow key={client.client_code}>
+                  {/* Code */}
                   <TableCell>
-                    <span className="font-medium">{client.name}</span>
-                  </TableCell>
-
-                  <TableCell>
-                    <span className="text-default-500">
+                    <span className="font-medium text-foreground">
                       {client.client_code}
                     </span>
                   </TableCell>
 
+                  {/* Name */}
+                  <TableCell>
+                    <span className="font-medium">{client.name}</span>
+                  </TableCell>
+
+                  {/* Created By */}
+                  <TableCell>
+                    <span className="text-default-500">
+                      {client.created_by}
+                    </span>
+                  </TableCell>
+
+                  {/* Request Date */}
                   <TableCell>{formatDate(client.request_date)}</TableCell>
 
+                  {/* Days */}
+                  <TableCell>
+                    <span className="font-medium">
+                      {getDaysSince(client.request_date)}
+                    </span>
+                  </TableCell>
+
+                  {/* Actions */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button
@@ -254,8 +345,59 @@ export default function ClientRequestsPage() {
           </Table>
         </Card>
 
-        {/* Mobile cards */}
+        {/* Mobile sort + cards */}
         <div className="space-y-3 sm:hidden">
+          <div className="flex gap-2">
+            <Select
+              label={t("sortBy")}
+              size="sm"
+              selectedKeys={[String(sortDescriptor.column)]}
+              onSelectionChange={(keys) => {
+                const column = Array.from(keys)[0];
+
+                if (!column) return;
+
+                setSortDescriptor((current) => ({
+                  ...current,
+                  column: String(column),
+                }));
+
+                setPage(1);
+              }}
+              className="flex-1"
+            >
+              <SelectItem key="client_code">{t("code")}</SelectItem>
+
+              <SelectItem key="name">{t("name")}</SelectItem>
+
+              <SelectItem key="request_date">{t("requestDate")}</SelectItem>
+            </Select>
+
+            <Button
+              isIconOnly
+              variant="flat"
+              aria-label={
+                sortDescriptor.direction === "ascending"
+                  ? t("ascending")
+                  : t("descending")
+              }
+              onPress={() => {
+                setSortDescriptor((current) => ({
+                  ...current,
+                  direction:
+                    current.direction === "ascending"
+                      ? "descending"
+                      : "ascending",
+                }));
+                setPage(1);
+              }}
+              className="mt-auto"
+            >
+              {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
+            </Button>
+          </div>
+
+          {/* Existing mobile cards */}
           {loading ? (
             <Card className="flex items-center justify-center p-8">
               <Spinner />
@@ -287,6 +429,28 @@ export default function ClientRequestsPage() {
 
                     <p className="mt-1 text-sm text-default-600">
                       {formatDate(client.request_date)}
+                    </p>
+                  </div>
+
+                  {/* Days */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+                      {t("days")}
+                    </p>
+
+                    <p className="mt-1 text-sm font-medium text-default-600">
+                      {getDaysSince(client.request_date)}
+                    </p>
+                  </div>
+
+                  {/* Created by */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+                      {t("createdBy")}
+                    </p>
+
+                    <p className="mt-1 text-sm text-default-600">
+                      {client.created_by}
                     </p>
                   </div>
 
@@ -362,4 +526,13 @@ function formatDate(date: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
+}
+
+function getDaysSince(date: string) {
+  const requestDate = new Date(date);
+  const now = new Date();
+
+  const difference = now.getTime() - requestDate.getTime();
+
+  return Math.max(0, Math.floor(difference / (1000 * 60 * 60 * 24)));
 }

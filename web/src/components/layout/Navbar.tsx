@@ -1,42 +1,112 @@
 "use client";
 
 import { Button } from "@heroui/react";
-import { Menu } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+
+import { Menu, Maximize, Minimize, Settings } from "lucide-react";
+
+import { useState } from "react";
+
+import Image from "next/image";
+
+import { useCompanyAssets } from "@/hooks/useCompanyAssets";
 
 import LanguageSelect from "@/components/LanguageSelect";
 
 type NavbarProps = {
   title: string;
-  subtitle?: string;
   onMenuPress: () => void;
+  onSettingsPress: () => void;
 };
 
-export default function Navbar({ title, subtitle, onMenuPress }: NavbarProps) {
+export default function Navbar({
+  title,
+  onMenuPress,
+  onSettingsPress,
+}: NavbarProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const { companyHydrated, companyLogo, companyName } = useCompanyAssets();
+
+  const handleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch {
+      // Ignore fullscreen errors
+    }
+  };
+
   return (
-    <header className="flex h-16 items-center justify-between border-b border-default-200 bg-background px-4 sm:px-6">
-      <div className="flex items-center gap-3">
-        {/* Mobile menu */}
+    <header className="flex h-16 shrink-0 items-center justify-between bg-blue-500 px-4 dark:bg-blue-700 sm:px-6">
+      {/* Left */}
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        {/* Logo */}
+        {companyHydrated && companyLogo ? (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white p-1 shadow-sm">
+            <div className="relative h-full w-full">
+              <Link href="/" className="absolute inset-0">
+                <Image
+                  src={companyLogo}
+                  alt={companyName || "Company"}
+                  fill
+                  className="object-contain"
+                  sizes="40px"
+                />
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="h-10 w-10 shrink-0 animate-pulse rounded-lg bg-white/30" />
+        )}
+
+        {/* Navigation */}
         <Button
           isIconOnly
           variant="light"
-          className="lg:hidden"
-          aria-label="Open menu"
+          aria-label="Open navigation"
           onPress={onMenuPress}
+          className="text-white hover:bg-blue-600 dark:hover:bg-blue-800"
         >
           <Menu size={21} />
         </Button>
 
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+        {/* Fullscreen */}
+        <Button
+          isIconOnly
+          variant="light"
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          onPress={handleFullscreen}
+          className="text-white hover:bg-blue-600 dark:hover:bg-blue-800"
+        >
+          {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+        </Button>
 
-          {subtitle && (
-            <p className="hidden text-xs text-default-500 sm:block">
-              {subtitle}
-            </p>
-          )}
-        </div>
+        {/* Page title */}
+        <h1 className="ml-1 truncate text-lg font-semibold text-white">
+          {title}
+        </h1>
       </div>
-      <LanguageSelect className="w-40" />
+
+      {/* Right */}
+      <div className="flex shrink-0 items-center gap-1">
+        <LanguageSelect />
+
+        <Button
+          isIconOnly
+          variant="light"
+          aria-label="Settings"
+          onPress={onSettingsPress}
+          className="text-white hover:bg-blue-600 dark:hover:bg-blue-800"
+        >
+          <Settings size={20} />
+        </Button>
+      </div>
     </header>
   );
 }
