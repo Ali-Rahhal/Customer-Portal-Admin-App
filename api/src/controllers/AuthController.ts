@@ -59,7 +59,7 @@ const login = async (
     },
   );
 
-  const serialized = serialize("auth", token, {
+  const serialized = serialize("authCustomerPortalAdminApp", token, {
     httpOnly: true,
     sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
     secure: process.env.NODE_ENV === "production" ? true : false,

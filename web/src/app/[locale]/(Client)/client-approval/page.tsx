@@ -217,39 +217,38 @@ export default function ClientApprovalPage() {
 
   return (
     <Layout title={t("title")}>
-      <div className="mx-auto w-full max-w-350">
-        {/* Top section */}
-        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Pending counter */}
-          <div>
-            <p className="text-sm font-medium text-default-500">
-              {t("pending")}
-            </p>
-
-            <p className="mt-1 text-3xl font-semibold text-foreground">
-              {total}
-            </p>
-          </div>
-
-          {/* Search */}
-          <Input
-            value={search}
-            onValueChange={handleSearch}
-            placeholder={t("searchPlaceholder")}
-            startContent={<Search size={18} className="text-default-400" />}
-            isClearable
-            onClear={() => handleSearch("")}
-            className="w-full sm:max-w-sm"
-          />
-        </div>
-
+      <div className="w-full">
         {/* Desktop table */}
         <Card className="hidden w-full overflow-hidden sm:block">
+          {/* Table top section */}
+          <div className="flex flex-col gap-4 border-b border-default-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Pending counter */}
+            <p className="text-base font-semibold text-primary-600">
+              {t("pending")}:{" "}
+              <span className="text-xl font-bold text-primary-700">
+                {total}
+              </span>
+            </p>
+
+            {/* Search */}
+            <Input
+              value={search}
+              onValueChange={handleSearch}
+              placeholder={t("searchPlaceholder")}
+              startContent={<Search size={18} className="text-default-400" />}
+              isClearable
+              onClear={() => handleSearch("")}
+              className="w-full sm:max-w-sm"
+            />
+          </div>
+
+          {/* Table */}
           <Table
             aria-label={t("title")}
             isStriped={true}
             sortDescriptor={sortDescriptor}
             onSortChange={handleSortChange}
+            radius="none"
           >
             <TableHeader>
               <TableColumn key="client_code" allowsSorting>
@@ -316,8 +315,8 @@ export default function ClientApprovalPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        color="success"
-                        variant="flat"
+                        color="primary"
+                        variant="solid"
                         startContent={<Check size={16} />}
                         isLoading={actionLoading === client.client_code}
                         isDisabled={actionLoading !== null}
@@ -328,7 +327,7 @@ export default function ClientApprovalPage() {
 
                       <Button
                         size="sm"
-                        color="danger"
+                        color="primary"
                         variant="flat"
                         startContent={<X size={16} />}
                         isLoading={actionLoading === client.client_code}
@@ -347,6 +346,26 @@ export default function ClientApprovalPage() {
 
         {/* Mobile sort + cards */}
         <div className="space-y-3 sm:hidden">
+          {/* Pending + Search */}
+          <div className="space-y-3">
+            <p className="text-base font-semibold text-primary-600">
+              {t("pending")}:{" "}
+              <span className="text-xl font-bold text-primary-700">
+                {total}
+              </span>
+            </p>
+
+            <Input
+              value={search}
+              onValueChange={handleSearch}
+              placeholder={t("searchPlaceholder")}
+              startContent={<Search size={18} className="text-default-400" />}
+              isClearable
+              onClear={() => handleSearch("")}
+            />
+          </div>
+
+          {/* Mobile sort */}
           <div className="flex gap-2">
             <Select
               label={t("sortBy")}
@@ -458,8 +477,8 @@ export default function ClientApprovalPage() {
                   <div className="flex gap-2 border-t border-default-100 pt-3">
                     <Button
                       size="sm"
-                      color="success"
-                      variant="flat"
+                      color="primary"
+                      variant="solid"
                       startContent={<Check size={16} />}
                       isLoading={actionLoading === client.client_code}
                       isDisabled={actionLoading !== null}
@@ -471,7 +490,7 @@ export default function ClientApprovalPage() {
 
                     <Button
                       size="sm"
-                      color="danger"
+                      color="primary"
                       variant="flat"
                       startContent={<X size={16} />}
                       isLoading={actionLoading === client.client_code}

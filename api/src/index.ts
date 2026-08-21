@@ -31,7 +31,7 @@ app.use(
 );
 
 async function authMiddleware(c: any, next: any) {
-  const token = getCookie(c, "auth");
+  const token = getCookie(c, "authCustomerPortalAdminApp");
 
   if (!token) return c.json({ message: "Not Authorized", result: null }, 401);
   const userId = await tokenAuth(token);

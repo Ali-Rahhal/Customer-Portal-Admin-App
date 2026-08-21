@@ -17,7 +17,7 @@ router.post(`/login`, async (c) => {
     return result;
     // return c.json({ message: "Login success", result: result });
   } catch (e: any) {
-    const serialized = serialize("auth", "", {
+    const serialized = serialize("authCustomerPortalAdminApp", "", {
       httpOnly: true,
       sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
       secure: process.env.NODE_ENV === "production" ? true : false,
@@ -33,7 +33,7 @@ router.post(`/login`, async (c) => {
 router.post(`/logout`, async (c) => {
   try {
     const userId = await getUserId(c);
-    const serialized = serialize("auth", "", {
+    const serialized = serialize("authCustomerPortalAdminApp", "", {
       httpOnly: true,
       sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
       secure: process.env.NODE_ENV === "production" ? true : false,

@@ -7,7 +7,7 @@ export async function getUserId(c: any) {
   return userId;
 }
 export async function getUserIdFromToken(c: Context) {
-  const token = getCookie(c, "auth");
+  const token = getCookie(c, "authCustomerPortalAdminApp");
   if (!token) throw new Error("No token provided");
   const userId = await tokenAuth(token);
   return userId;
