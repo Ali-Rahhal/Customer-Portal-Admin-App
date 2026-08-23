@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -494,7 +495,7 @@ model client {
   default_user_code            String?                        @db.NVarChar(50)
   billing_address_type         Int                            @default(0, map: "DF__client__billing___6EF57B66")
   unique_identifier            Int                            @default(autoincrement())
-  moh_number                   String?                        @db.NVarChar(50)
+  moh_number                   String?                        @unique(map: "UQ_client_moh_number", where: raw("([moh_number] IS NOT NULL)")) @db.NVarChar(50)
   email                        String?                        @db.NVarChar(100)
   client_location_availability client_location_availability[]
   client_price_list            client_price_list[]
@@ -715,7 +716,7 @@ model client_location_history {
 
 model client_pending {
   client_code      String    @id(map: "PK__client_p__EC5CBC360CC821A2") @db.NVarChar(50)
-  moh_number       String?   @db.NVarChar(50)
+  moh_number       String?   @unique(map: "UQ_client_pending_moh_number") @db.NVarChar(50)
   phone_number     String?   @db.NVarChar(100)
   email            String?   @db.NVarChar(100)
   description      String?   @db.NVarChar(100)
@@ -7522,4 +7523,15 @@ model wrong_transaction_body_20190118 {
   transaction_header_id BigInt
 
   @@ignore
+}
+
+model PasswordSetupToken {
+  id        Int      @id(map: "PK__Password__3213E83F5E655F8A") @default(autoincrement())
+  code      String   @db.NVarChar(100)
+  tokenHash String   @unique(map: "UQ__Password__9015C60E7B00D95C") @db.NVarChar(512)
+  expiresAt DateTime
+  used      Boolean  @default(false, map: "DF__PasswordSe__used__529236CD")
+  createdAt DateTime @default(now(), map: "DF__PasswordS__creat__53865B06")
+
+  @@index([code], map: "IX_PasswordSetupToken_code")
 }

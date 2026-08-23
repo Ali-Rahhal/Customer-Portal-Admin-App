@@ -1,4 +1,7 @@
 import { prisma } from "../lib/prisma";
+import crypto from "crypto";
+import { sendClientAcceptedEmail } from "../utils/sendClientAcceptedEmail";
+import { sendClientRejectedEmail } from "../utils/sendClientRejectedEmail";
 
 const getPendingClients = async (
   take = 20,
@@ -95,11 +98,19 @@ const rejectClient = async (clientCode: string, userId: string) => {
     },
   });
 
+  const { email } = await prisma.client_pending.findFirstOrThrow({
+    where: {
+      client_code: clientCode,
+    },
+  });
+
+  await sendClientRejectedEmail(email ?? "", clientCode);
+
   return updatedClient;
 };
 
 const acceptClient = async (clientCode: string, userId: string) => {
-  return await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // Check client
     const client = await tx.client.findUnique({
       where: {
@@ -204,8 +215,35 @@ const acceptClient = async (clientCode: string, userId: string) => {
       });
     }
 
-    return updatedClient;
+    // Create password setup token
+    const setupToken = crypto.randomBytes(32).toString("hex");
+
+    const setupTokenHash = crypto
+      .createHash("sha256")
+      .update(setupToken)
+      .digest("hex");
+
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await tx.passwordSetupToken.create({
+      data: {
+        code: clientCode,
+        tokenHash: setupTokenHash,
+        expiresAt,
+      },
+    });
+
+    return {
+      client: updatedClient,
+      email: pendingClient.email ?? "",
+      description: pendingClient.description,
+      setupToken,
+    };
   });
+
+  await sendClientAcceptedEmail(result.email, clientCode, result.setupToken);
+
+  return result.client;
 };
 
 export { getPendingClients, rejectClient, acceptClient };
