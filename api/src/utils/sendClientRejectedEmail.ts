@@ -22,22 +22,12 @@ export const sendClientRejectedEmail = async (
 
   const registrationUrl = `${frontendUrl}/register`;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
-    to: email,
-    subject: "Client Registration Request",
-    text: `
-Your client registration request could not be approved at this time.
-
-Please retry your registration using the following link:
-${registrationUrl}
-
-Client Code: ${clientCode}
-
-If you need assistance, please contact support.
-    `.trim(),
-
-    html: `
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+      to: email,
+      subject: `Client Registration Request (${Date.now()})`,
+      html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <h2>Registration Request</h2>
 
@@ -74,5 +64,18 @@ If you need assistance, please contact support.
         </p>
       </div>
     `,
-  });
+    });
+
+    console.log("Rejection email sent:", {
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response,
+    });
+
+    return info;
+  } catch (error) {
+    console.error("Failed to send Rejection email:", error);
+    throw new Error("Failed to send Rejection email");
+  }
 };

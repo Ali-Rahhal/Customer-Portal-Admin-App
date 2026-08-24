@@ -7535,3 +7535,13 @@ model PasswordSetupToken {
 
   @@index([code], map: "IX_PasswordSetupToken_code")
 }
+
+model EmailVerificationCode {
+  id        Int      @id(map: "PK__EmailVer__3213E83FABA84908") @default(autoincrement())
+  mohNumber String   @db.NVarChar(100)
+  email     String   @db.NVarChar(255)
+  codeHash  String   @db.NVarChar(255)
+  expiresAt DateTime
+  used      Boolean  @default(false, map: "DF__EmailVerif__used__63BCC2CF")
+  createdAt DateTime @default(now(), map: "DF__EmailVeri__creat__64B0E708")
+}

@@ -23,25 +23,12 @@ export const sendClientAcceptedEmail = async (
   }
 
   const createPasswordUrl = `${frontendUrl}/create-password?token=${encodeURIComponent(setupToken)}&companyId=${encodeURIComponent(companyId)}`;
-
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
-    to: email,
-    subject: "Your client account has been approved",
-    text: `
-Your client account has been approved.
-
-Client Code: ${clientCode}
-
-Please use the following link to create your password:
-${createPasswordUrl}
-
-Once you create your password, you will be able to log in to the customer portal.
-
-If you did not request this account, please contact support.
-    `.trim(),
-
-    html: `
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+      to: email,
+      subject: `Your client account has been approved (${Date.now()})`,
+      html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <h2>Your client account has been approved</h2>
 
@@ -84,5 +71,18 @@ If you did not request this account, please contact support.
         </p>
       </div>
     `,
-  });
+    });
+
+    console.log("Accepted email sent:", {
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response,
+    });
+
+    return info;
+  } catch (error) {
+    console.error("Failed to send Accepted email:", error);
+    throw new Error("Failed to send Accepted email");
+  }
 };

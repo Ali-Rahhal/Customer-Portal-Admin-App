@@ -225,6 +225,16 @@ const acceptClient = async (clientCode: string, userId: string) => {
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+    await tx.passwordSetupToken.updateMany({
+      where: {
+        code: clientCode,
+        used: false,
+      },
+      data: {
+        used: true,
+      },
+    });
+
     await tx.passwordSetupToken.create({
       data: {
         code: clientCode,
