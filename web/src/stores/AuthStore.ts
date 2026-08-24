@@ -50,7 +50,7 @@ export const useAuthStore = create<AuthStore>()(
             companyId: process.env.NEXT_PUBLIC_DEFAULT_COMPANY as CompanyId,
             companyDisabled: false,
           });
-          document.cookie = `companyId=${process.env.NEXT_PUBLIC_DEFAULT_COMPANY}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `companyIdCustomerPortalAdminApp=${process.env.NEXT_PUBLIC_DEFAULT_COMPANY}; path=/; max-age=31536000; SameSite=Lax`;
         }
 
         try {

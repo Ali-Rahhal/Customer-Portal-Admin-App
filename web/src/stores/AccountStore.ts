@@ -72,7 +72,7 @@ export const useAccountStore = create<AccountStore>()(
         set({ name, code, email, status }),
     }),
     {
-      name: "account",
+      name: "accountCustomerPortalAdminApp",
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);
       },

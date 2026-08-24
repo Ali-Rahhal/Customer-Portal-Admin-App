@@ -36,7 +36,7 @@ export const useCompanyStore = create<CompanyStore>()(
       },
     }),
     {
-      name: "company",
+      name: "companyCustomerPortalAdminApp",
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 

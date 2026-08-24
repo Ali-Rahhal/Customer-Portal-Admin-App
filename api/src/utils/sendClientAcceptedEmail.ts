@@ -16,12 +16,13 @@ export const sendClientAcceptedEmail = async (
   setupToken: string,
 ) => {
   const frontendUrl = process.env.FRONTEND_URL;
+  const companyId = process.env.DEFAULT_COMPANY || "DU";
 
   if (!frontendUrl) {
     throw new Error("FRONTEND_URL is not configured.");
   }
 
-  const createPasswordUrl = `${frontendUrl}/create-password?token=${encodeURIComponent(setupToken)}`;
+  const createPasswordUrl = `${frontendUrl}/create-password?token=${encodeURIComponent(setupToken)}&companyId=${encodeURIComponent(companyId)}`;
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
