@@ -93,6 +93,7 @@ const getPendingClients = async (
   search = "",
   sortBy = "last_edited",
   sortOrder: "asc" | "desc" = "desc",
+  statusFilter: "all" | "known" | "unknown" = "all",
 ): Promise<AxiosResponse> => {
   return await axios.get(`${privateApi}/client/get_pending_clients`, {
     params: {
@@ -101,6 +102,7 @@ const getPendingClients = async (
       search,
       sortBy,
       sortOrder,
+      statusFilter,
     },
     withCredentials: true,
   });

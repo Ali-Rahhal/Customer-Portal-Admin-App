@@ -9,49 +9,88 @@ const getPendingClients = async (
   search = "",
   sortBy = "last_edited",
   sortOrder: "asc" | "desc" = "desc",
+  statusFilter: "all" | "known" | "unknown" = "all",
 ) => {
-  // 1. Fetch pending clients and their generator_user_code
+  // ---------------------------------------------------------
+  // Client status filter
+  // 7  = Known / Waiting Approval
+  // 99 = Unknown / Newly Created
+  // ---------------------------------------------------------
+
+  const statusIds =
+    statusFilter === "known"
+      ? [7]
+      : statusFilter === "unknown"
+        ? [99]
+        : [7, 99];
+
   const pendingClients = await prisma.client.findMany({
-    where: { status_id: 7 },
+    where: {
+      status_id: {
+        in: statusIds,
+      },
+    },
     select: {
       client_code: true,
       generator_user_code: true,
+      status_id: true,
     },
   });
 
-  // Map generator codes for O(1) lookup
-  const userCodeMap = new Map(
-    pendingClients.map((c) => [c.client_code, c.generator_user_code]),
+  const clientMap = new Map(
+    pendingClients.map((client) => [
+      client.client_code,
+      {
+        generator_user_code: client.generator_user_code,
+        status_id: client.status_id,
+      },
+    ]),
   );
 
-  const clientCodes = Array.from(userCodeMap.keys());
+  const clientCodes = pendingClients.map((client) => client.client_code);
 
   const whereCondition = {
     client_code: {
       in: clientCodes,
     },
+
     ...(search && {
       OR: [
-        { client_code: { contains: search } },
-        { description: { contains: search } },
+        {
+          client_code: {
+            contains: search,
+          },
+        },
+        {
+          description: {
+            contains: search,
+          },
+        },
       ],
     }),
   };
 
-  // Dynamic orderBy object (handles both client_code and last_edited/description)
   const orderBy = {
     [sortBy]: sortOrder,
   };
 
   const [total, clients] = await Promise.all([
-    prisma.client_pending.count({ where: whereCondition }),
+    prisma.client_pending.count({
+      where: whereCondition,
+    }),
+
     prisma.client_pending.findMany({
       where: whereCondition,
+
       select: {
         client_code: true,
         description: true,
         last_edited: true,
+        email: true,
+        phone_number: true,
+        moh_number: true,
       },
+
       orderBy,
       skip,
       take,
@@ -59,12 +98,25 @@ const getPendingClients = async (
   ]);
 
   return {
-    data: clients.map((client) => ({
-      client_code: client.client_code,
-      name: client.description,
-      request_date: client.last_edited,
-      created_by: userCodeMap.get(client.client_code) ?? null,
-    })),
+    data: clients.map((client) => {
+      const clientInfo = clientMap.get(client.client_code);
+
+      const isUnknown = clientInfo?.status_id === 99;
+
+      return {
+        client_code: client.client_code,
+        name: client.description,
+        request_date: client.last_edited,
+        created_by: clientInfo?.generator_user_code ?? null,
+
+        status_id: clientInfo?.status_id ?? null,
+
+        // Only expose these for unknown clients
+        email: isUnknown ? client.email : null,
+        phone_number: isUnknown ? client.phone_number : null,
+        moh_number: isUnknown ? client.moh_number : null,
+      };
+    }),
     total,
   };
 };
@@ -84,10 +136,36 @@ const rejectClient = async (clientCode: string, userId: string) => {
     throw new Error("Client not found.");
   }
 
-  if (client.status_id !== 7) {
+  if (client.status_id !== 7 && client.status_id !== 99) {
     throw new Error("Client cannot be rejected because it is not pending.");
   }
 
+  const { email, moh_number } = await prisma.client_pending.findFirstOrThrow({
+    where: {
+      client_code: clientCode,
+    },
+    select: {
+      email: true,
+      moh_number: true,
+    },
+  });
+
+  // Newly created clients are completely removed
+  if (client.status_id === 99) {
+    await prisma.$executeRaw`
+      EXEC dbo.DELETE_PENDING_CLIENT
+        @ClientCode = ${clientCode}
+    `;
+
+    await sendClientRejectedEmail(email ?? "", moh_number ?? "");
+
+    return {
+      client_code: clientCode,
+      status_id: 6,
+    };
+  }
+
+  // Existing pending clients are marked as rejected
   const updatedClient = await prisma.client.update({
     where: {
       client_code: clientCode,
@@ -98,13 +176,7 @@ const rejectClient = async (clientCode: string, userId: string) => {
     },
   });
 
-  const { email } = await prisma.client_pending.findFirstOrThrow({
-    where: {
-      client_code: clientCode,
-    },
-  });
-
-  await sendClientRejectedEmail(email ?? "", clientCode);
+  await sendClientRejectedEmail(email ?? "", moh_number ?? "");
 
   return updatedClient;
 };
@@ -126,7 +198,7 @@ const acceptClient = async (clientCode: string, userId: string) => {
       throw new Error("Client not found.");
     }
 
-    if (client.status_id !== 7) {
+    if (client.status_id !== 7 && client.status_id !== 99) {
       throw new Error("Client cannot be accepted because it is not pending.");
     }
 
@@ -156,6 +228,7 @@ const acceptClient = async (clientCode: string, userId: string) => {
         email: pendingClient.email,
         status_id: 5,
         approver_user_code: userId,
+        approval_date: new Date(),
       },
     });
 

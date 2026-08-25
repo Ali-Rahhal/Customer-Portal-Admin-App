@@ -18,6 +18,10 @@ router.get(`/get_pending_clients`, async (c) => {
     const sortOrder = (
       c.req.query("sortOrder")?.toLowerCase() === "asc" ? "asc" : "desc"
     ) as "asc" | "desc";
+    const statusFilter = (c.req.query("statusFilter") ?? "all") as
+      | "all"
+      | "known"
+      | "unknown";
 
     const result = await getPendingClients(
       take,
@@ -25,6 +29,7 @@ router.get(`/get_pending_clients`, async (c) => {
       search,
       sortBy,
       sortOrder,
+      statusFilter,
     );
 
     return c.json({

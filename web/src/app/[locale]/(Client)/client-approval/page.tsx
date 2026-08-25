@@ -15,11 +15,17 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Pagination,
   addToast,
 } from "@heroui/react";
 import type { SortDescriptor } from "@react-types/shared";
 
-import { Check, Search, X } from "lucide-react";
+import { Check, Search, X, Eye, RefreshCw } from "lucide-react";
 
 import { useTranslations } from "next-intl";
 
@@ -36,6 +42,10 @@ interface PendingClient {
   name: string;
   request_date: string;
   created_by: string;
+  status_id: number;
+  email: string | null;
+  phone_number: string | null;
+  moh_number: string | null;
 }
 
 type SortColumn = "client_code" | "description" | "last_edited";
@@ -67,6 +77,14 @@ export default function ClientApprovalPage() {
     direction: "descending",
   });
 
+  const [statusFilter, setStatusFilter] = useState<"all" | "known" | "unknown">(
+    "all",
+  );
+
+  const [selectedClient, setSelectedClient] = useState<PendingClient | null>(
+    null,
+  );
+
   const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
@@ -85,6 +103,7 @@ export default function ClientApprovalPage() {
         search,
         sortBy,
         sortOrder,
+        statusFilter,
       );
 
       const result = response.data.result;
@@ -99,7 +118,7 @@ export default function ClientApprovalPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, sortDescriptor, t]);
+  }, [page, search, sortDescriptor, statusFilter, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +141,7 @@ export default function ClientApprovalPage() {
           search,
           sortBy,
           sortOrder,
+          statusFilter,
         );
 
         if (cancelled) return;
@@ -149,9 +169,44 @@ export default function ClientApprovalPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, search, sortDescriptor, t]);
+  }, [page, search, sortDescriptor, statusFilter, t]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+
+      const skip = (page - 1) * PAGE_SIZE;
+
+      const sortBy =
+        SORT_COLUMN_MAP[String(sortDescriptor.column)] ?? "last_edited";
+
+      const sortOrder =
+        sortDescriptor.direction === "ascending" ? "asc" : "desc";
+
+      const response = await getPendingClients(
+        PAGE_SIZE,
+        skip,
+        search,
+        sortBy,
+        sortOrder,
+        statusFilter,
+      );
+
+      const result = response.data.result;
+
+      setClients(result?.data ?? []);
+      setTotal(result?.total ?? 0);
+    } catch (error: any) {
+      addToast({
+        title: error?.response?.data?.message || t("fetchError"),
+        color: "danger",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -222,13 +277,52 @@ export default function ClientApprovalPage() {
         <Card className="hidden w-full overflow-hidden sm:block">
           {/* Table top section */}
           <div className="flex flex-col gap-4 border-b border-default-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Pending counter */}
-            <p className="text-base font-semibold text-primary-600">
-              {t("pending")}:{" "}
-              <span className="text-xl font-bold text-primary-700">
-                {total}
-              </span>
-            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {/* Pending counter */}
+              <p className="text-base font-semibold text-primary-600">
+                {t("pending")}:{" "}
+                <span className="text-xl font-bold text-primary-700">
+                  {total}
+                </span>
+              </p>
+
+              {/* Client type filter */}
+              <Select
+                size="sm"
+                aria-label={t("clientType")}
+                selectedKeys={[statusFilter]}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0];
+
+                  if (
+                    value === "all" ||
+                    value === "known" ||
+                    value === "unknown"
+                  ) {
+                    setStatusFilter(value);
+                    setPage(1);
+                  }
+                }}
+                className="w-full sm:w-40"
+              >
+                <SelectItem key="all">{t("allClients")}</SelectItem>
+
+                <SelectItem key="known">{t("knownClients")}</SelectItem>
+
+                <SelectItem key="unknown">{t("unknownClients")}</SelectItem>
+              </Select>
+
+              <Button
+                size="sm"
+                variant="flat"
+                isIconOnly
+                isLoading={loading}
+                aria-label={t("refresh")}
+                onPress={handleRefresh}
+              >
+                <RefreshCw size={17} />
+              </Button>
+            </div>
 
             {/* Search */}
             <Input
@@ -269,6 +363,10 @@ export default function ClientApprovalPage() {
 
               <TableColumn key="days">{t("days").toUpperCase()}</TableColumn>
 
+              <TableColumn key="details">
+                {t("moreDetails").toUpperCase()}
+              </TableColumn>
+
               <TableColumn key="actions">
                 {t("actions").toUpperCase()}
               </TableColumn>
@@ -280,7 +378,12 @@ export default function ClientApprovalPage() {
               loadingContent={<Spinner />}
             >
               {clients.map((client) => (
-                <TableRow key={client.client_code}>
+                <TableRow
+                  key={client.client_code}
+                  className={
+                    client.status_id === 99 ? "bg-warning-50" : undefined
+                  }
+                >
                   {/* Code */}
                   <TableCell>
                     <span className="font-medium text-foreground">
@@ -296,7 +399,7 @@ export default function ClientApprovalPage() {
                   {/* Created By */}
                   <TableCell>
                     <span className="text-default-500">
-                      {client.created_by}
+                      {client.created_by || "—"}
                     </span>
                   </TableCell>
 
@@ -308,6 +411,24 @@ export default function ClientApprovalPage() {
                     <span className="font-medium">
                       {getDaysSince(client.request_date)}
                     </span>
+                  </TableCell>
+
+                  {/* Details */}
+                  <TableCell>
+                    {client.status_id === 99 ? (
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="flat"
+                        color="warning"
+                        aria-label={t("viewDetails")}
+                        onPress={() => setSelectedClient(client)}
+                      >
+                        <Eye size={17} />
+                      </Button>
+                    ) : (
+                      <span className="text-default-300">—</span>
+                    )}
                   </TableCell>
 
                   {/* Actions */}
@@ -355,6 +476,44 @@ export default function ClientApprovalPage() {
               </span>
             </p>
 
+            {/* Filter */}
+            <div className="flex gap-2">
+              <Select
+                size="sm"
+                label={t("clientType")}
+                selectedKeys={[statusFilter]}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0];
+
+                  if (
+                    value === "all" ||
+                    value === "known" ||
+                    value === "unknown"
+                  ) {
+                    setStatusFilter(value);
+                    setPage(1);
+                  }
+                }}
+                className="flex-1"
+              >
+                <SelectItem key="all">{t("allClients")}</SelectItem>
+                <SelectItem key="known">{t("knownClients")}</SelectItem>
+                <SelectItem key="unknown">{t("unknownClients")}</SelectItem>
+              </Select>
+
+              <Button
+                isIconOnly
+                variant="flat"
+                aria-label={t("refresh")}
+                isLoading={loading}
+                onPress={handleRefresh}
+                className="mt-auto"
+              >
+                <RefreshCw size={17} />
+              </Button>
+            </div>
+
+            {/* Search */}
             <Input
               value={search}
               onValueChange={handleSearch}
@@ -427,7 +586,14 @@ export default function ClientApprovalPage() {
             </Card>
           ) : (
             clients.map((client) => (
-              <Card key={client.client_code} className="p-4">
+              <Card
+                key={client.client_code}
+                className={
+                  client.status_id === 99
+                    ? "border-2 border-warning-200 bg-warning-50 p-4"
+                    : "p-4"
+                }
+              >
                 <div className="space-y-4">
                   {/* Client information */}
                   <div>
@@ -438,6 +604,20 @@ export default function ClientApprovalPage() {
                     <p className="mt-1 text-sm text-default-500">
                       {client.client_code}
                     </p>
+
+                    {client.status_id === 99 && (
+                      <div className="mt-3">
+                        <Button
+                          size="sm"
+                          variant="flat"
+                          color="warning"
+                          startContent={<Eye size={16} />}
+                          onPress={() => setSelectedClient(client)}
+                        >
+                          {t("moreDetails")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Request date */}
@@ -469,7 +649,7 @@ export default function ClientApprovalPage() {
                     </p>
 
                     <p className="mt-1 text-sm text-default-600">
-                      {client.created_by}
+                      {client.created_by || "-"}
                     </p>
                   </div>
 
@@ -509,33 +689,89 @@ export default function ClientApprovalPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-5 flex items-center justify-between">
+          <div className="mt-5 flex flex-col items-center gap-3">
             <p className="text-sm text-default-500">
               {t("page")} {page} {t("pageOf")} {totalPages}
             </p>
 
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="flat"
-                isDisabled={page === 1 || loading}
-                onPress={() => setPage((currentPage) => currentPage - 1)}
-              >
-                {t("previous")}
-              </Button>
-
-              <Button
-                size="sm"
-                variant="flat"
-                isDisabled={page === totalPages || loading}
-                onPress={() => setPage((currentPage) => currentPage + 1)}
-              >
-                {t("next")}
-              </Button>
-            </div>
+            <Pagination
+              page={page}
+              total={totalPages}
+              onChange={setPage}
+              showControls
+              isDisabled={loading}
+              size="sm"
+              variant="flat"
+            />
           </div>
         )}
       </div>
+      <Modal
+        isOpen={selectedClient !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedClient(null);
+          }
+        }}
+      >
+        <ModalContent>
+          {selectedClient && (
+            <>
+              <ModalHeader>{t("moreDetails")}</ModalHeader>
+
+              <ModalBody>
+                <div className="space-y-4">
+                  {/* Client Code */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+                      {t("code")}
+                    </p>
+
+                    <p className="mt-1 font-medium">
+                      {selectedClient.client_code}
+                    </p>
+                  </div>
+
+                  {/* MOH */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+                      {t("mohNumber")}
+                    </p>
+
+                    <p className="mt-1">{selectedClient.moh_number || "—"}</p>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+                      {t("phoneNumber")}
+                    </p>
+
+                    <p className="mt-1">{selectedClient.phone_number || "—"}</p>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
+                      {t("email")}
+                    </p>
+
+                    <p className="mt-1 break-all">
+                      {selectedClient.email || "—"}
+                    </p>
+                  </div>
+                </div>
+              </ModalBody>
+
+              <ModalFooter>
+                <Button variant="flat" onPress={() => setSelectedClient(null)}>
+                  {t("close")}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </Layout>
   );
 }

@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendClientRejectedEmail = async (
   email: string,
-  clientCode: string,
+  moh_number: string,
 ) => {
   const frontendUrl = process.env.FRONTEND_URL;
 
@@ -56,7 +56,7 @@ export const sendClientRejectedEmail = async (
         </p>
 
         <p>
-          <strong>Client Code:</strong> ${clientCode}
+          <strong>MOH Number:</strong> ${moh_number}
         </p>
 
         <p>
@@ -64,13 +64,6 @@ export const sendClientRejectedEmail = async (
         </p>
       </div>
     `,
-    });
-
-    console.log("Rejection email sent:", {
-      messageId: info.messageId,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      response: info.response,
     });
 
     return info;

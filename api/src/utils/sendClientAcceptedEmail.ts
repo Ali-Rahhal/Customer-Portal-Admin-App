@@ -73,13 +73,6 @@ export const sendClientAcceptedEmail = async (
     `,
     });
 
-    console.log("Accepted email sent:", {
-      messageId: info.messageId,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      response: info.response,
-    });
-
     return info;
   } catch (error) {
     console.error("Failed to send Accepted email:", error);

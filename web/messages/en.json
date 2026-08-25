@@ -91,6 +91,21 @@
     "page": "Page",
     "pageOf": "of",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+
+    "clientType": "Client Type",
+    "allClients": "All Clients",
+    "knownClients": "Known Clients",
+    "unknownClients": "Unknown Clients",
+    "known": "Known",
+    "unknown": "Unknown",
+    "moreDetails": "More Details",
+    "viewDetails": "View Details",
+    "clientDetails": "Client Details",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "mohNumber": "MOH Number",
+    "close": "Close",
+    "refresh": "Refresh"
   }
 }
