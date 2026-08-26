@@ -53,8 +53,8 @@ const logout = async () => {
   return await axios.post(publicApi + "/logout", {}, { withCredentials: true });
 };
 
-const user = async (cookie: string) => {
-  return await axios.get(privateApi + "/user", {
+const validateAuth = async (cookie?: string) => {
+  return await axios.get(privateApi + "/validate", {
     withCredentials: true,
     headers: {
       Cookie: cookie || "",
@@ -138,7 +138,7 @@ export {
   //Auth
   login,
   logout,
-  user,
+  validateAuth,
   changePassword,
   getUserDetails,
   //Client

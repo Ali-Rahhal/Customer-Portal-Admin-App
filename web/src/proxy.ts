@@ -1,39 +1,39 @@
 import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 
-import { user } from "./utils/apiCalls";
+import { validateAuth } from "./utils/apiCalls";
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-const unauthRoutes = ["/login"];
-const authRoutes = ["/", "/client-approval"];
+const publicRoutes = ["/login"];
+
+function matchesRoute(pathname: string, route: string) {
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // --------------------------------------------------
-  // Let next-intl handle locale detection/routing
-  // --------------------------------------------------
-
-  const intlResponse = intlMiddleware(request);
-
-  // --------------------------------------------------
-  // Get locale from the pathname
+  // Get locale from pathname
   // --------------------------------------------------
 
   const locale = routing.locales.find(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
 
-  // If there is no locale yet, let next-intl handle it.
+  // Let next-intl handle requests without a locale
   if (!locale) {
-    return intlResponse;
+    return intlMiddleware(request);
   }
 
-  // Remove locale from pathname for route matching.
+  // --------------------------------------------------
+  // Remove locale from pathname
+  // --------------------------------------------------
+
   const pathnameWithoutLocale =
-    pathname === `/${locale}` ? "/" : pathname.replace(`/${locale}`, "");
+    pathname === `/${locale}` ? "/" : pathname.slice(`/${locale}`.length);
 
   // --------------------------------------------------
   // Authentication
@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
   let isAuth = false;
 
   try {
-    const result = await user(cookie);
+    const result = await validateAuth(cookie);
     isAuth = result.status === 200;
   } catch (error: any) {
     console.log("Authentication check failed:", error?.message);
@@ -53,44 +53,36 @@ export async function proxy(request: NextRequest) {
   }
 
   // --------------------------------------------------
-  // Route matching
+  // Public route check
   // --------------------------------------------------
 
-  const isUnauthRoute = unauthRoutes.some(
-    (route) =>
-      pathnameWithoutLocale === route ||
-      pathnameWithoutLocale.startsWith(route + "/"),
-  );
-
-  const isAuthRoute = authRoutes.some(
-    (route) =>
-      pathnameWithoutLocale === route ||
-      pathnameWithoutLocale.startsWith(route + "/"),
+  const isPublicRoute = publicRoutes.some((route) =>
+    matchesRoute(pathnameWithoutLocale, route),
   );
 
   // --------------------------------------------------
-  // Authenticated user on login page
+  // Authenticated user trying to access public page
   // --------------------------------------------------
 
-  if (isAuth && isUnauthRoute) {
+  if (isAuth && isPublicRoute) {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
   // --------------------------------------------------
-  // Unauthenticated user on protected route
+  // Unauthenticated user trying to access protected page
   // --------------------------------------------------
 
-  if (!isAuth && isAuthRoute) {
+  if (!isAuth && !isPublicRoute) {
     return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
   // --------------------------------------------------
-  // Continue with next-intl response
+  // Continue with next-intl
   // --------------------------------------------------
 
-  return intlResponse;
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: ["/((?!api|trpc|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/", "/(en|fr)/:path*"],
 };

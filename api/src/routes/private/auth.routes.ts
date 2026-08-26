@@ -6,13 +6,35 @@ import {
 import { getUserId } from "../../utils/auth.utils";
 const router = new Hono();
 
-router.get(`/user`, async (c) => {
+router.get(`/validate`, async (c) => {
   try {
     const userId = await getUserId(c);
-    const result = "";
-    return c.json({ message: "Get user success", result: result }, 200);
-  } catch (e: any) {
-    return c.json({ message: e.message, result: null }, 401);
+    if (!userId) {
+      return c.json(
+        {
+          authenticated: false,
+          result: null,
+        },
+        401,
+      );
+    }
+    return c.json(
+      {
+        authenticated: true,
+        result: {
+          userId,
+        },
+      },
+      200,
+    );
+  } catch {
+    return c.json(
+      {
+        authenticated: false,
+        result: null,
+      },
+      401,
+    );
   }
 });
 
