@@ -81,6 +81,7 @@
     "actions": "Actions",
     "approve": "Approuver",
     "reject": "Rejeter",
+    "cancel": "Annuler",
     "loading": "Chargement des demandes des clients...",
     "noRequests": "Aucune demande de client en attente trouvée.",
     "requestRejected": "Demande du client rejetée.",
@@ -97,15 +98,24 @@
     "allClients": "Tous les clients",
     "knownClients": "Clients connus",
     "unknownClients": "Clients inconnus",
-    "known": "Connu",
     "unknown": "Inconnu",
-    "moreDetails": "Plus de détails",
-    "viewDetails": "Voir les détails",
+
     "clientDetails": "Détails du client",
+    "newClientDetails": "Détails du nouveau client",
+    "compareClientDetails": "Informations du client et comparaison avec la base de données",
+    "clientInfo": "Informations du client",
+    "dbInfo": "Informations de la base de données",
+
     "email": "E-mail",
     "phoneNumber": "Numéro de téléphone",
     "mohNumber": "Numéro MOH",
-    "close": "Fermer",
+    "firstName": "Prénom",
+    "lastName": "Nom de famille",
+    "region": "Région",
+    "address": "Adresse",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+
     "refresh": "Rafraîchir"
   }
 }

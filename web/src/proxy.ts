@@ -47,8 +47,6 @@ export async function proxy(request: NextRequest) {
     const result = await validateAuth(cookie);
     isAuth = result.status === 200;
   } catch (error: any) {
-    console.log("Authentication check failed:", error?.message);
-
     isAuth = false;
   }
 

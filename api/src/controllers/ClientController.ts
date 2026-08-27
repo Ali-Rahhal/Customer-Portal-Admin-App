@@ -34,6 +34,10 @@ const getPendingClients = async (
       client_code: true,
       generator_user_code: true,
       status_id: true,
+      description: true,
+      email: true,
+      latitude: true,
+      longitude: true,
     },
   });
 
@@ -43,6 +47,10 @@ const getPendingClients = async (
       {
         generator_user_code: client.generator_user_code,
         status_id: client.status_id,
+        description: client.description,
+        email: client.email,
+        latitude: client.latitude,
+        longitude: client.longitude,
       },
     ]),
   );
@@ -53,7 +61,6 @@ const getPendingClients = async (
     client_code: {
       in: clientCodes,
     },
-
     ...(search && {
       OR: [
         {
@@ -81,7 +88,6 @@ const getPendingClients = async (
 
     prisma.client_pending.findMany({
       where: whereCondition,
-
       select: {
         client_code: true,
         description: true,
@@ -89,34 +95,126 @@ const getPendingClients = async (
         email: true,
         phone_number: true,
         moh_number: true,
+        first_name: true,
+        last_name: true,
+        region: true,
+        address: true,
+        latitude: true,
+        longitude: true,
       },
-
       orderBy,
       skip,
       take,
     }),
   ]);
 
+  // ---------------------------------------------------------
+  // Get DB client region
+  // ---------------------------------------------------------
+
+  const clientRegions = await prisma.client_address.findMany({
+    where: {
+      client_code: {
+        in: clients.map((client) => client.client_code),
+      },
+    },
+    select: {
+      client_code: true,
+      address_code: true,
+    },
+  });
+
+  const regionMap = new Map(
+    clientRegions.map((address) => [address.client_code, address.address_code]),
+  );
+
+  // ---------------------------------------------------------
+  // Get DB client phone
+  // property_id = 1
+  // ---------------------------------------------------------
+
+  const clientPhones = await prisma.client_property.findMany({
+    where: {
+      client_code: {
+        in: clients.map((client) => client.client_code),
+      },
+      property_id: 1,
+    },
+    select: {
+      client_code: true,
+      description: true,
+    },
+  });
+
+  const phoneMap = new Map(
+    clientPhones.map((property) => [
+      property.client_code,
+      property.description,
+    ]),
+  );
+
+  // ---------------------------------------------------------
+  // Get DB client address
+  // property_id = 2
+  // ---------------------------------------------------------
+
+  const clientAddresses = await prisma.client_property.findMany({
+    where: {
+      client_code: {
+        in: clients.map((client) => client.client_code),
+      },
+      property_id: 2,
+    },
+    select: {
+      client_code: true,
+      description: true,
+    },
+  });
+
+  const addressMap = new Map(
+    clientAddresses.map((property) => [
+      property.client_code,
+      property.description,
+    ]),
+  );
+
+  // ---------------------------------------------------------
+  // Return
+  // ---------------------------------------------------------
+
   return {
     data: clients.map((client) => {
       const clientInfo = clientMap.get(client.client_code);
-
-      const isUnknown = clientInfo?.status_id === 99;
 
       return {
         client_code: client.client_code,
         name: client.description,
         request_date: client.last_edited,
-        created_by: clientInfo?.generator_user_code ?? null,
 
+        created_by: clientInfo?.generator_user_code ?? null,
         status_id: clientInfo?.status_id ?? null,
 
-        // Only expose these for unknown clients
-        email: isUnknown ? client.email : null,
-        phone_number: isUnknown ? client.phone_number : null,
-        moh_number: isUnknown ? client.moh_number : null,
+        email: client.email,
+        phone_number: client.phone_number,
+        moh_number: client.moh_number,
+        first_name: client.first_name,
+        last_name: client.last_name,
+        region: client.region,
+        address: client.address,
+        latitude: client.latitude,
+        longitude: client.longitude,
+
+        // DB client information
+        db_name: clientInfo?.description ?? null,
+        db_email: clientInfo?.email ?? null,
+        db_longitude: clientInfo?.longitude ?? null,
+        db_latitude: clientInfo?.latitude ?? null,
+        db_region: regionMap.get(client.client_code) ?? null,
+        db_phone_number: phoneMap.get(client.client_code) ?? null,
+        db_address: addressMap.get(client.client_code) ?? null,
       };
     }),
+
     total,
   };
 };
@@ -211,6 +309,12 @@ const acceptClient = async (clientCode: string, userId: string) => {
         description: true,
         phone_number: true,
         email: true,
+        first_name: true,
+        last_name: true,
+        latitude: true,
+        longitude: true,
+        region: true,
+        address: true,
       },
     });
 
@@ -229,19 +333,95 @@ const acceptClient = async (clientCode: string, userId: string) => {
         status_id: 5,
         approver_user_code: userId,
         approval_date: new Date(),
+        ...(pendingClient.latitude != null && {
+          latitude: pendingClient.latitude,
+        }),
+        ...(pendingClient.longitude != null && {
+          longitude: pendingClient.longitude,
+        }),
       },
     });
 
-    // Update phone number in client_property
-    await tx.client_property.updateMany({
+    // Update phone number
+    const clientPhone = await tx.client_property.findFirst({
       where: {
         client_code: clientCode,
         property_id: 1,
       },
-      data: {
-        description: pendingClient.phone_number,
+    });
+    if (clientPhone) {
+      await tx.client_property.updateMany({
+        where: {
+          client_code: clientCode,
+          property_id: 1,
+        },
+        data: {
+          description: pendingClient.phone_number,
+          alt_description: pendingClient.phone_number,
+        },
+      });
+    } else {
+      await tx.client_property.create({
+        data: {
+          client_code: clientCode,
+          property_id: 1,
+          description: pendingClient.phone_number,
+          alt_description: pendingClient.phone_number,
+        },
+      });
+    }
+
+    // Update address
+    const clientAddress = await tx.client_property.findFirst({
+      where: {
+        client_code: clientCode,
+        property_id: 2,
       },
     });
+    if (clientAddress) {
+      await tx.client_property.updateMany({
+        where: {
+          client_code: clientCode,
+          property_id: 2,
+        },
+        data: {
+          description: pendingClient.address,
+          alt_description: pendingClient.address,
+        },
+      });
+    } else {
+      await tx.client_property.create({
+        data: {
+          client_code: clientCode,
+          property_id: 2,
+          description: pendingClient.address,
+          alt_description: pendingClient.address,
+        },
+      });
+    }
+
+    //update region
+    const clientRegion = await tx.client_address.findFirst({
+      where: {
+        client_code: clientCode,
+      },
+      select: {
+        client_address_id: true,
+      },
+    });
+
+    if (clientRegion) {
+      await tx.client_address.update({
+        where: {
+          client_address_id: clientRegion.client_address_id,
+        },
+        data: {
+          ...(pendingClient.region != null && {
+            address_code: pendingClient.region,
+          }),
+        },
+      });
+    }
 
     // Check if web account already exists
     const webAccount = await tx.web_accounts.findFirst({
@@ -257,6 +437,8 @@ const acceptClient = async (clientCode: string, userId: string) => {
           id: webAccount.id,
         },
         data: {
+          first_name: pendingClient.first_name,
+          last_name: pendingClient.last_name,
           password: "noPasswordCurently",
           phone: pendingClient.phone_number,
           description: pendingClient.description,
@@ -280,6 +462,8 @@ const acceptClient = async (clientCode: string, userId: string) => {
         data: {
           id: newWebAccountId,
           code: clientCode,
+          first_name: pendingClient.first_name,
+          last_name: pendingClient.last_name,
           description: pendingClient.description,
           password: "noPasswordCurently",
           phone: pendingClient.phone_number,

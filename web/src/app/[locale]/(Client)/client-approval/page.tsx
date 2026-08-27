@@ -25,7 +25,7 @@ import {
 } from "@heroui/react";
 import type { SortDescriptor } from "@react-types/shared";
 
-import { Check, Search, X, Eye, RefreshCw } from "lucide-react";
+import { Check, Search, X, RefreshCw } from "lucide-react";
 
 import { useTranslations } from "next-intl";
 
@@ -43,9 +43,24 @@ interface PendingClient {
   request_date: string;
   created_by: string;
   status_id: number;
+
   email: string | null;
   phone_number: string | null;
   moh_number: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  region: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+
+  db_name: string | null;
+  db_email: string | null;
+  db_phone_number: string | null;
+  db_region: string | null;
+  db_address: string | null;
+  db_latitude: number | null;
+  db_longitude: number | null;
 }
 
 type SortColumn = "client_code" | "description" | "last_edited";
@@ -70,7 +85,10 @@ export default function ClientApprovalPage() {
 
   const [loading, setLoading] = useState(true);
 
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<{
+    clientCode: string;
+    action: "approve" | "reject";
+  } | null>(null);
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "request_date",
@@ -218,9 +236,43 @@ export default function ClientApprovalPage() {
     setPage(1);
   };
 
+  const handleApprove = async (clientCode: string) => {
+    try {
+      setActionLoading({
+        clientCode,
+        action: "approve",
+      });
+
+      await acceptClient(clientCode);
+
+      addToast({
+        title: t("requestApproved"),
+        color: "success",
+      });
+
+      setSelectedClient(null);
+
+      if (clients.length === 1 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
+      } else {
+        await fetchClients();
+      }
+    } catch (error: any) {
+      addToast({
+        title: error?.response?.data?.message || t("approveError"),
+        color: "danger",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleReject = async (clientCode: string) => {
     try {
-      setActionLoading(clientCode);
+      setActionLoading({
+        clientCode,
+        action: "reject",
+      });
 
       await rejectClient(clientCode);
 
@@ -237,32 +289,6 @@ export default function ClientApprovalPage() {
     } catch (error: any) {
       addToast({
         title: error?.response?.data?.message || t("rejectError"),
-        color: "danger",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleApprove = async (clientCode: string) => {
-    try {
-      setActionLoading(clientCode);
-
-      await acceptClient(clientCode);
-
-      addToast({
-        title: t("requestApproved"),
-        color: "success",
-      });
-
-      if (clients.length === 1 && page > 1) {
-        setPage((currentPage) => currentPage - 1);
-      } else {
-        await fetchClients();
-      }
-    } catch (error: any) {
-      addToast({
-        title: error?.response?.data?.message || t("approveError"),
         color: "danger",
       });
     } finally {
@@ -349,6 +375,10 @@ export default function ClientApprovalPage() {
                 {t("code").toUpperCase()}
               </TableColumn>
 
+              <TableColumn key="moh_number" allowsSorting>
+                {t("mohNumber").toUpperCase()}
+              </TableColumn>
+
               <TableColumn key="name" allowsSorting>
                 {t("name").toUpperCase()}
               </TableColumn>
@@ -362,10 +392,6 @@ export default function ClientApprovalPage() {
               </TableColumn>
 
               <TableColumn key="days">{t("days").toUpperCase()}</TableColumn>
-
-              <TableColumn key="details">
-                {t("moreDetails").toUpperCase()}
-              </TableColumn>
 
               <TableColumn key="actions">
                 {t("actions").toUpperCase()}
@@ -391,6 +417,13 @@ export default function ClientApprovalPage() {
                     </span>
                   </TableCell>
 
+                  {/* Moh Number */}
+                  <TableCell>
+                    <span className="font-medium text-foreground">
+                      {client.moh_number}
+                    </span>
+                  </TableCell>
+
                   {/* Name */}
                   <TableCell>
                     <span className="font-medium">{client.name}</span>
@@ -413,24 +446,6 @@ export default function ClientApprovalPage() {
                     </span>
                   </TableCell>
 
-                  {/* Details */}
-                  <TableCell>
-                    {client.status_id === 99 ? (
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        color="warning"
-                        aria-label={t("viewDetails")}
-                        onPress={() => setSelectedClient(client)}
-                      >
-                        <Eye size={17} />
-                      </Button>
-                    ) : (
-                      <span className="text-default-300">—</span>
-                    )}
-                  </TableCell>
-
                   {/* Actions */}
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -439,9 +454,12 @@ export default function ClientApprovalPage() {
                         color="primary"
                         variant="solid"
                         startContent={<Check size={16} />}
-                        isLoading={actionLoading === client.client_code}
+                        isLoading={
+                          actionLoading?.clientCode === client.client_code &&
+                          actionLoading?.action === "approve"
+                        }
                         isDisabled={actionLoading !== null}
-                        onPress={() => handleApprove(client.client_code)}
+                        onPress={() => setSelectedClient(client)}
                       >
                         {t("approve")}
                       </Button>
@@ -451,7 +469,10 @@ export default function ClientApprovalPage() {
                         color="primary"
                         variant="flat"
                         startContent={<X size={16} />}
-                        isLoading={actionLoading === client.client_code}
+                        isLoading={
+                          actionLoading?.clientCode === client.client_code &&
+                          actionLoading?.action === "reject"
+                        }
                         isDisabled={actionLoading !== null}
                         onPress={() => handleReject(client.client_code)}
                       >
@@ -590,67 +611,70 @@ export default function ClientApprovalPage() {
                 key={client.client_code}
                 className={
                   client.status_id === 99
-                    ? "border-2 border-warning-200 bg-warning-50 p-4"
-                    : "p-4"
+                    ? "border-2 border-warning-200 bg-warning-50 p-3"
+                    : "p-3"
                 }
               >
-                <div className="space-y-4">
-                  {/* Client information */}
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {client.name}
-                    </p>
-
-                    <p className="mt-1 text-sm text-default-500">
-                      {client.client_code}
-                    </p>
+                <div className="space-y-3">
+                  {/* Client header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-foreground">
+                        {client.name || "—"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-default-500">
+                        {client.client_code}
+                      </p>
+                    </div>
 
                     {client.status_id === 99 && (
-                      <div className="mt-3">
-                        <Button
-                          size="sm"
-                          variant="flat"
-                          color="warning"
-                          startContent={<Eye size={16} />}
-                          onPress={() => setSelectedClient(client)}
-                        >
-                          {t("moreDetails")}
-                        </Button>
-                      </div>
+                      <span className="shrink-0 rounded-full bg-warning-100 px-2 py-0.5 text-[10px] font-medium text-warning-700">
+                        {t("unknown")}
+                      </span>
                     )}
                   </div>
 
-                  {/* Request date */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("requestDate")}
-                    </p>
+                  {/* Compact information grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-default-100 pt-3">
+                    {/* MOH number */}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-default-400">
+                        {t("mohNumber")}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-default-600">
+                        {client.moh_number || "—"}
+                      </p>
+                    </div>
 
-                    <p className="mt-1 text-sm text-default-600">
-                      {formatDate(client.request_date)}
-                    </p>
-                  </div>
+                    {/* Request date */}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-default-400">
+                        {t("requestDate")}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-default-600">
+                        {formatDate(client.request_date)}
+                      </p>
+                    </div>
 
-                  {/* Days */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("days")}
-                    </p>
+                    {/* Days */}
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-default-400">
+                        {t("days")}
+                      </p>
+                      <p className="mt-0.5 text-xs font-semibold text-default-600">
+                        {getDaysSince(client.request_date)}
+                      </p>
+                    </div>
 
-                    <p className="mt-1 text-sm font-medium text-default-600">
-                      {getDaysSince(client.request_date)}
-                    </p>
-                  </div>
-
-                  {/* Created by */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("createdBy")}
-                    </p>
-
-                    <p className="mt-1 text-sm text-default-600">
-                      {client.created_by || "-"}
-                    </p>
+                    {/* Created by */}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium uppercase tracking-wide text-default-400">
+                        {t("createdBy")}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-default-600">
+                        {client.created_by || "—"}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Actions */}
@@ -659,11 +683,14 @@ export default function ClientApprovalPage() {
                       size="sm"
                       color="primary"
                       variant="solid"
-                      startContent={<Check size={16} />}
-                      isLoading={actionLoading === client.client_code}
+                      startContent={<Check size={15} />}
+                      isLoading={
+                        actionLoading?.clientCode === client.client_code &&
+                        actionLoading?.action === "approve"
+                      }
                       isDisabled={actionLoading !== null}
-                      className="flex-1"
-                      onPress={() => handleApprove(client.client_code)}
+                      className="h-8 flex-1 text-xs"
+                      onPress={() => setSelectedClient(client)}
                     >
                       {t("approve")}
                     </Button>
@@ -672,10 +699,13 @@ export default function ClientApprovalPage() {
                       size="sm"
                       color="primary"
                       variant="flat"
-                      startContent={<X size={16} />}
-                      isLoading={actionLoading === client.client_code}
+                      startContent={<X size={15} />}
+                      isLoading={
+                        actionLoading?.clientCode === client.client_code &&
+                        actionLoading?.action === "reject"
+                      }
                       isDisabled={actionLoading !== null}
-                      className="flex-1"
+                      className="h-8 flex-1 text-xs"
                       onPress={() => handleReject(client.client_code)}
                     >
                       {t("reject")}
@@ -709,63 +739,228 @@ export default function ClientApprovalPage() {
       <Modal
         isOpen={selectedClient !== null}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && actionLoading === null) {
             setSelectedClient(null);
           }
+        }}
+        size="lg"
+        scrollBehavior="inside"
+        classNames={{
+          base: "max-h-[90vh]",
+          body: "py-4",
         }}
       >
         <ModalContent>
           {selectedClient && (
             <>
-              <ModalHeader>{t("moreDetails")}</ModalHeader>
+              <ModalHeader className="border-b border-default-100 px-5 py-4">
+                <div>
+                  <h3 className="text-lg font-semibold">{t("approve")}</h3>
+
+                  <p className="mt-1 text-sm font-normal text-default-500">
+                    {selectedClient.status_id === 99
+                      ? t("newClientDetails")
+                      : t("compareClientDetails")}
+                  </p>
+                </div>
+              </ModalHeader>
 
               <ModalBody>
-                <div className="space-y-4">
-                  {/* Client Code */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("code")}
-                    </p>
+                {/* =====================================================
+              STATUS 99 - NEW CLIENT
+          ===================================================== */}
+                {selectedClient.status_id === 99 ? (
+                  <div className="space-y-5">
+                    <SectionTitle title={t("clientInfo")} />
 
-                    <p className="mt-1 font-medium">
-                      {selectedClient.client_code}
-                    </p>
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                      <DetailRow
+                        label={t("code")}
+                        value={selectedClient.client_code}
+                      />
+
+                      <DetailRow
+                        label={t("name")}
+                        value={selectedClient.name}
+                      />
+
+                      <DetailRow
+                        label={t("mohNumber")}
+                        value={selectedClient.moh_number}
+                      />
+
+                      <DetailRow
+                        label={t("firstName")}
+                        value={selectedClient.first_name}
+                      />
+
+                      <DetailRow
+                        label={t("lastName")}
+                        value={selectedClient.last_name}
+                      />
+
+                      <DetailRow
+                        label={t("phoneNumber")}
+                        value={selectedClient.phone_number}
+                      />
+
+                      <DetailRow
+                        label={t("email")}
+                        value={selectedClient.email}
+                        breakWords
+                      />
+
+                      <DetailRow
+                        label={t("region")}
+                        value={selectedClient.region}
+                      />
+
+                      <DetailRow
+                        label={t("address")}
+                        value={selectedClient.address}
+                        breakWords
+                      />
+
+                      <DetailRow
+                        label={t("latitude")}
+                        value={selectedClient.latitude}
+                      />
+
+                      <DetailRow
+                        label={t("longitude")}
+                        value={selectedClient.longitude}
+                      />
+                    </div>
                   </div>
+                ) : (
+                  /* =====================================================
+               STATUS 7 - CLIENT INFO + DB COMPARISON
+            ===================================================== */
+                  <div className="space-y-5">
+                    {/* Client Information */}
+                    <section>
+                      <SectionTitle title={t("clientInfo")} />
 
-                  {/* MOH */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("mohNumber")}
-                    </p>
+                      <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                        <DetailRow
+                          label={t("code")}
+                          value={selectedClient.client_code}
+                        />
 
-                    <p className="mt-1">{selectedClient.moh_number || "—"}</p>
+                        <DetailRow
+                          label={t("name")}
+                          value={selectedClient.name}
+                        />
+
+                        <DetailRow
+                          label={t("mohNumber")}
+                          value={selectedClient.moh_number}
+                        />
+
+                        <DetailRow
+                          label={t("firstName")}
+                          value={selectedClient.first_name}
+                        />
+
+                        <DetailRow
+                          label={t("lastName")}
+                          value={selectedClient.last_name}
+                        />
+                      </div>
+                    </section>
+
+                    {/* Comparison */}
+                    <section className="border-t border-default-200 pt-5">
+                      <SectionTitle title={t("compareClientDetails")} />
+
+                      {/* Column headers */}
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
+                        <div className="rounded-md bg-default-100 px-3 py-2">
+                          <p className="text-xs font-semibold text-default-600 sm:text-sm">
+                            {t("clientInfo")}
+                          </p>
+                        </div>
+
+                        <div className="rounded-md bg-primary-50 px-3 py-2">
+                          <p className="text-xs font-semibold text-primary-700 sm:text-sm">
+                            {t("dbInfo")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 space-y-2">
+                        <CompareRow
+                          label={t("name")}
+                          clientValue={selectedClient.name}
+                          dbValue={selectedClient.db_name}
+                        />
+
+                        <CompareRow
+                          label={t("email")}
+                          clientValue={selectedClient.email}
+                          dbValue={selectedClient.db_email}
+                        />
+
+                        <CompareRow
+                          label={t("phoneNumber")}
+                          clientValue={selectedClient.phone_number}
+                          dbValue={selectedClient.db_phone_number}
+                        />
+
+                        <CompareRow
+                          label={t("region")}
+                          clientValue={selectedClient.region}
+                          dbValue={selectedClient.db_region}
+                        />
+
+                        <CompareRow
+                          label={t("address")}
+                          clientValue={selectedClient.address}
+                          dbValue={selectedClient.db_address}
+                        />
+
+                        <CompareRow
+                          label={t("latitude")}
+                          clientValue={selectedClient.latitude}
+                          dbValue={selectedClient.db_latitude}
+                        />
+
+                        <CompareRow
+                          label={t("longitude")}
+                          clientValue={selectedClient.longitude}
+                          dbValue={selectedClient.db_longitude}
+                        />
+                      </div>
+                    </section>
                   </div>
-
-                  {/* Phone */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("phoneNumber")}
-                    </p>
-
-                    <p className="mt-1">{selectedClient.phone_number || "—"}</p>
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-default-400">
-                      {t("email")}
-                    </p>
-
-                    <p className="mt-1 break-all">
-                      {selectedClient.email || "—"}
-                    </p>
-                  </div>
-                </div>
+                )}
               </ModalBody>
 
-              <ModalFooter>
-                <Button variant="flat" onPress={() => setSelectedClient(null)}>
-                  {t("close")}
+              <ModalFooter className="border-t border-default-100 px-5 py-3">
+                <Button
+                  variant="flat"
+                  isDisabled={actionLoading !== null}
+                  onPress={() => setSelectedClient(null)}
+                >
+                  {t("cancel")}
+                </Button>
+
+                <Button
+                  color="primary"
+                  startContent={
+                    actionLoading?.clientCode !== selectedClient.client_code ||
+                    actionLoading?.action !== "approve" ? (
+                      <Check size={16} />
+                    ) : undefined
+                  }
+                  isLoading={
+                    actionLoading?.clientCode === selectedClient.client_code &&
+                    actionLoading?.action === "approve"
+                  }
+                  isDisabled={actionLoading !== null}
+                  onPress={() => handleApprove(selectedClient.client_code)}
+                >
+                  {t("approve")}
                 </Button>
               </ModalFooter>
             </>
@@ -790,4 +985,96 @@ function getDaysSince(date: string) {
   const difference = now.getTime() - requestDate.getTime();
 
   return Math.max(0, Math.floor(difference / (1000 * 60 * 60 * 24)));
+}
+
+function DetailRow({
+  label,
+  value,
+  breakWords = false,
+}: {
+  label: string;
+  value: string | number | null | undefined;
+  breakWords?: boolean;
+}) {
+  const displayValue =
+    value === null || value === undefined || value === "" ? "—" : String(value);
+
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-default-400">
+        {label}
+      </p>
+
+      <p
+        className={`mt-0.5 text-sm font-medium text-default-700 ${
+          breakWords ? "wrap-break-word" : "truncate"
+        }`}
+        title={displayValue}
+      >
+        {displayValue}
+      </p>
+    </div>
+  );
+}
+
+function CompareRow({
+  label,
+  clientValue,
+  dbValue,
+}: {
+  label: string;
+  clientValue: string | number | null | undefined;
+  dbValue: string | number | null | undefined;
+}) {
+  const displayValue = (value: string | number | null | undefined) =>
+    value === null || value === undefined || value === "" ? "—" : String(value);
+
+  const clientDisplay = displayValue(clientValue);
+  const dbDisplay = displayValue(dbValue);
+
+  const different = clientDisplay !== dbDisplay;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-default-400">
+        {label}
+      </p>
+
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div
+          className={`min-w-0 rounded-md border px-3 py-2 ${
+            different
+              ? "border-warning-300 bg-warning-50"
+              : "border-default-200 bg-default-50"
+          }`}
+        >
+          <p className="wrap-break-word text-sm text-default-700">
+            {clientDisplay}
+          </p>
+        </div>
+
+        <div
+          className={`min-w-0 rounded-md border px-3 py-2 ${
+            different
+              ? "border-warning-300 bg-warning-50"
+              : "border-default-200 bg-default-50"
+          }`}
+        >
+          <p className="wrap-break-word text-sm text-default-700">
+            {dbDisplay}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-4 w-1 rounded-full bg-primary" />
+
+      <p className="text-sm font-semibold text-default-700">{title}</p>
+    </div>
+  );
 }
