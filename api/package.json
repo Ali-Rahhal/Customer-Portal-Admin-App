@@ -1,12 +1,12 @@
 {
   "name": "CustomerPortalAdminApp_Api",
-  "version": "27.08.2026-0.0.4",
+  "version": "07.09.2026-0.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "cron": "tsx --watch src/cron.ts",
-    "build": "npx esbuild src/index.ts --platform=node --bundle --minify --format=esm --outfile=dist/index.js"
+    "build": "npx esbuild src/index.ts --platform=node --bundle --minify --format=esm --packages=external --outfile=dist/index.js"
   },
   "keywords": [],
   "author": "",

@@ -141,7 +141,7 @@ export default function NavigationSidebar({
                 <span>{t("clientApproval")}</span>
               </Link>
 
-              <Link href="#" onClick={onNavigate} className={linkClass("")}>
+              {/* <Link href="#" onClick={onNavigate} className={linkClass("")}>
                 <UserRound size={17} />
 
                 <span>{t("clientList")}</span>
@@ -157,12 +157,12 @@ export default function NavigationSidebar({
                 <LogIn size={17} />
 
                 <span>{t("clientLogins")}</span>
-              </Link>
+              </Link> */}
             </div>
           </AccordionItem>
 
           {/* Orders */}
-          <AccordionItem
+          {/* <AccordionItem
             key="orders"
             aria-label={t("orders")}
             title={
@@ -178,7 +178,7 @@ export default function NavigationSidebar({
 
               <span>{t("confirmedOrders")}</span>
             </Link>
-          </AccordionItem>
+          </AccordionItem> */}
         </Accordion>
       </nav>
 

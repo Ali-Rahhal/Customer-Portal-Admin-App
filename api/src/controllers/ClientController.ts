@@ -289,6 +289,7 @@ const acceptClient = async (clientCode: string, userId: string) => {
       select: {
         client_code: true,
         status_id: true,
+        erp_client_code: true,
       },
     });
 
@@ -460,7 +461,7 @@ const acceptClient = async (clientCode: string, userId: string) => {
       // Create new web account
       await tx.web_accounts.create({
         data: {
-          id: newWebAccountId,
+          id: Number(client.erp_client_code),
           code: clientCode,
           first_name: pendingClient.first_name,
           last_name: pendingClient.last_name,
