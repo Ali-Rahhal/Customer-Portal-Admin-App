@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/stores/AuthStore";
 import axios, { AxiosResponse } from "axios";
 
 const isServer = typeof window === "undefined";
@@ -26,6 +27,22 @@ if (isServer) {
 }
 const publicApi = API_BASE_URL;
 const privateApi = `${API_BASE_URL}/auth`;
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      (error.response?.status === 400 ||
+        error.response?.status === 401 ||
+        error.response?.status === 403) &&
+      error.response?.data?.code === "LICENSE_EXPIRED"
+    ) {
+      useAuthStore.getState().logout();
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 //////
 ////////Auth ApiCalls

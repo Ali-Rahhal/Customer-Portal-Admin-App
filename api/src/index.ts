@@ -8,6 +8,7 @@ import { compress } from "hono/compress";
 import authPrivateRoutes from "./routes/private/auth.routes";
 import authPublicRoutes from "./routes/public/auth.routes";
 import clientPrivateRoutes from "./routes/private/client.routes";
+import { licenseMiddleware } from "./middleware/licenseMiddleware";
 
 //@ts-expect-error weird toJSON error
 BigInt.prototype.toJSON = function () {
@@ -42,6 +43,8 @@ async function authMiddleware(c: any, next: any) {
 
 app.use("*", compress());
 app.use(`${PRIVATE_API}/*`, authMiddleware);
+
+app.use("*", licenseMiddleware);
 
 app.route(`${PUBLIC_API}`, authPublicRoutes);
 

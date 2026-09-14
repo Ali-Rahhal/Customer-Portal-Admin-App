@@ -22,8 +22,6 @@ type AuthStore = {
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
-      isAuthenticated: false,
-      user: null,
       token: null,
       isAuth: false,
       login: async ({ userId, password }) => {

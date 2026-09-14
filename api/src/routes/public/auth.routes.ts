@@ -2,10 +2,18 @@ import { Hono } from "hono";
 import { login } from "../../controllers/AuthController";
 import { getUserId } from "../../utils/auth.utils";
 import { serialize } from "hono/utils/cookie";
+import { checkLicense, type CompanyId } from "../../utils/licenseService";
 const router = new Hono();
 
 router.post(`/login`, async (c) => {
   try {
+    const license = await checkLicense(
+      process.env.DEFAULT_COMPANY?.toUpperCase() as CompanyId,
+    );
+    if (!license.valid) {
+      throw new Error("License expired");
+    }
+
     const body = await c.req.json();
 
     const userId = body["userId"].toString();
