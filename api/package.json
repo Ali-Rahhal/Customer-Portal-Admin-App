@@ -1,6 +1,6 @@
 {
   "name": "CustomerPortalAdminApp_Api",
-  "version": "07.09.2026-0.0.5",
+  "version": "15.09.2026-0.0.6",
   "description": "",
   "main": "index.js",
   "scripts": {
