@@ -29,7 +29,7 @@ export interface CompanyConfig {
 
 export const Companies = {
   DU: {
-    enabled: true,
+    enabled: false,
     id: "DU",
     name: "Droguerie de L'Union Pharmaceutical Company",
     abreviation: "DU",
@@ -113,7 +113,7 @@ export const Companies = {
     },
   },
   SADCO: {
-    enabled: false,
+    enabled: true,
     id: "SADCO",
     name: "Sami Dandan & Co.",
     abreviation: "SADCO",

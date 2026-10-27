@@ -132,13 +132,17 @@ const getPendingClients = async (
   // Get DB client phone
   // property_id = 1
   // ---------------------------------------------------------
+  let propertyId = 1;
+  if (process.env.DEFAULT_COMPANY === "SADCO") {
+    propertyId = 8;
+  }
 
   const clientPhones = await prisma.client_property.findMany({
     where: {
       client_code: {
         in: clients.map((client) => client.client_code),
       },
-      property_id: 1,
+      property_id: propertyId,
     },
     select: {
       client_code: true,
@@ -158,12 +162,17 @@ const getPendingClients = async (
   // property_id = 2
   // ---------------------------------------------------------
 
+  propertyId = 2;
+  if (process.env.DEFAULT_COMPANY === "SADCO") {
+    propertyId = 15;
+  }
+
   const clientAddresses = await prisma.client_property.findMany({
     where: {
       client_code: {
         in: clients.map((client) => client.client_code),
       },
-      property_id: 2,
+      property_id: propertyId,
     },
     select: {
       client_code: true,
@@ -344,17 +353,21 @@ const acceptClient = async (clientCode: string, userId: string) => {
     });
 
     // Update phone number
+    let propertyId = 1;
+    if (process.env.DEFAULT_COMPANY === "SADCO") {
+      propertyId = 8;
+    }
     const clientPhone = await tx.client_property.findFirst({
       where: {
         client_code: clientCode,
-        property_id: 1,
+        property_id: propertyId,
       },
     });
     if (clientPhone) {
       await tx.client_property.updateMany({
         where: {
           client_code: clientCode,
-          property_id: 1,
+          property_id: propertyId,
         },
         data: {
           description: pendingClient.phone_number,
@@ -365,7 +378,7 @@ const acceptClient = async (clientCode: string, userId: string) => {
       await tx.client_property.create({
         data: {
           client_code: clientCode,
-          property_id: 1,
+          property_id: propertyId,
           description: pendingClient.phone_number,
           alt_description: pendingClient.phone_number,
         },
@@ -373,17 +386,21 @@ const acceptClient = async (clientCode: string, userId: string) => {
     }
 
     // Update address
+    propertyId = 2;
+    if (process.env.DEFAULT_COMPANY === "SADCO") {
+      propertyId = 15;
+    }
     const clientAddress = await tx.client_property.findFirst({
       where: {
         client_code: clientCode,
-        property_id: 2,
+        property_id: propertyId,
       },
     });
     if (clientAddress) {
       await tx.client_property.updateMany({
         where: {
           client_code: clientCode,
-          property_id: 2,
+          property_id: propertyId,
         },
         data: {
           description: pendingClient.address,
@@ -394,7 +411,7 @@ const acceptClient = async (clientCode: string, userId: string) => {
       await tx.client_property.create({
         data: {
           client_code: clientCode,
-          property_id: 2,
+          property_id: propertyId,
           description: pendingClient.address,
           alt_description: pendingClient.address,
         },
